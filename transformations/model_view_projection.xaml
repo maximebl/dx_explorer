@@ -1,0 +1,15 @@
+﻿<Page
+    x:Class="transformations.model_view_projection"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:transformations"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBox Text="{x:Bind vm.Title, Mode=TwoWay}" />
+        <Button Content="initialize app" Command="{x:Bind vm.initialize_app}" CommandParameter="{x:Bind vm.Title, Mode=OneWay}"/>
+        <SwapChainPanel x:Name="swapchain_panel" Width="512" Height="512"/>
+    </StackPanel>
+</Page>

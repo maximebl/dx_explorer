@@ -1,0 +1,11 @@
+import "mvp_viewmodel.idl";
+
+namespace transformations
+{
+	[default_interface]
+	runtimeclass model_view_projection : Windows.UI.Xaml.Controls.Page
+	{
+		model_view_projection();
+		mvp_viewmodel vm{ get; };
+	}
+}

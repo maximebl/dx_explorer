@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Page Include="model_view_projection.xaml">
+      <Filter>views</Filter>
+    </Page>
+    <Page Include="MainPage.xaml">
+      <Filter>views</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="App.idl" />
+    <Midl Include="MainPage.idl" />
+    <Midl Include="model_view_projection.idl" />
+    <Midl Include="mvp_viewmodel.idl">
+      <Filter>view_models</Filter>
+    </Midl>
+    <Midl Include="bindable_base.idl">
+      <Filter>view_models</Filter>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="MainPage.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="model_view_projection.cpp" />
+    <ClCompile Include="mvp_viewmodel.cpp" />
+    <ClCompile Include="mvp_showcase_app.cpp">
+      <Filter>applications</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_tools.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ui_helpers.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="cmd_queue.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="system_info.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="bindable_base.cpp" />
+    <ClCompile Include="device_resources.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="frame_resource.cpp" />
+    <ClCompile Include="..\external_libs\GeometryGenerator.cpp">
+      <Filter>external_libs</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="App.h" />
+    <ClInclude Include="MainPage.h" />
+    <ClInclude Include="model_view_projection.h" />
+    <ClInclude Include="mvp_viewmodel.h" />
+    <ClInclude Include="mvp_showcase_app.h">
+      <Filter>applications</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_tools.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ui_helpers.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="cmd_queue.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="system_info.h">
+      <Filter>utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="bindable_base.h" />
+    <ClInclude Include="device_resources.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="frame_resource.h" />
+    <ClInclude Include="..\external_libs\d3dx12.h">
+      <Filter>external_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\external_libs\GeometryGenerator.h">
+      <Filter>external_libs</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="transformations_TemporaryKey.pfx" />
+    <None Include="packages.config" />
+    <None Include="shaders\default_shader.hlsl">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{e48dc53e-40b1-40cb-970a-f89935452892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="views">
+      <UniqueIdentifier>{da2591ed-186b-4577-84d2-38159236425b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="view_models">
+      <UniqueIdentifier>{cb992646-e025-4f90-87c3-a205cc8788fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="applications">
+      <UniqueIdentifier>{ad39e391-2f50-4310-96a2-9d408b863346}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utilities">
+      <UniqueIdentifier>{13e6e26c-bf70-4b70-914d-8ef0cbfb1f3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphics">
+      <UniqueIdentifier>{958b8ff1-c649-4e53-997e-b267b583c054}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{b0eed752-5d7f-48eb-833c-0ccad1b0c5aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external_libs">
+      <UniqueIdentifier>{ac595f2f-7672-4ee9-bfca-7c842e00e7ef}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PropertySheet.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Filter>views</Filter>
+    </ApplicationDefinition>
+  </ItemGroup>
+</Project>

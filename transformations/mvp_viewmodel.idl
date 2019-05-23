@@ -1,0 +1,13 @@
+import "bindable_base.idl";
+
+namespace transformations
+{
+	unsealed runtimeclass mvp_viewmodel : bindable_base
+	{
+		mvp_viewmodel();
+
+		String Title;
+		Windows.UI.Xaml.Input.XamlUICommand initialize_app{ get; };
+		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
+	}
+}
