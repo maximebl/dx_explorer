@@ -6,6 +6,11 @@
 
 cbuffer ModelViewProjectionCB : register(b0)
 {
+    // combined world (model), view, projection matrices used to transform a point from local space to homogeneous clip space
+
+    // world matrix of an object changes when it moves/rotates/scales
+    // view matrix changes when the camera moves/rotates
+    // projection matrix changes when the window is resized
     matrix MVP;
 }
 

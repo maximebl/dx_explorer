@@ -112,6 +112,7 @@
     <ClInclude Include="debug_tools.h" />
     <ClInclude Include="device_resources.h" />
     <ClInclude Include="frame_resource.h" />
+    <ClInclude Include="mesh.h" />
     <ClInclude Include="model_view_projection.h">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -130,6 +131,7 @@
     </ClInclude>
     <ClInclude Include="system_info.h" />
     <ClInclude Include="ui_helpers.h" />
+    <ClInclude Include="upload_buffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -159,7 +161,9 @@
     <Image Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\external_libs\GeometryGenerator.cpp" />
+    <ClCompile Include="..\external_libs\GeometryGenerator.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="bindable_base.cpp">
       <DependentUpon>bindable_base.idl</DependentUpon>
       <SubType>Code</SubType>
@@ -168,6 +172,7 @@
     <ClCompile Include="debug_tools.cpp" />
     <ClCompile Include="device_resources.cpp" />
     <ClCompile Include="frame_resource.cpp" />
+    <ClCompile Include="mesh.cpp" />
     <ClCompile Include="model_view_projection.cpp">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -189,6 +194,9 @@
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
     <ClCompile Include="system_info.cpp" />
     <ClCompile Include="ui_helpers.cpp" />
+    <ClCompile Include="upload_buffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">

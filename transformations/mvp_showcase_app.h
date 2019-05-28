@@ -4,6 +4,8 @@
 #include "device_resources.h"
 #include "cmd_queue.h"
 #include "frame_resource.h"
+#include "../external_libs/GeometryGenerator.h"
+#include "mesh.h"
 
 class mvp_showcase_app
 {
@@ -20,8 +22,7 @@ public:
 	void run();
 
 	void create_root_signature();
-	void create_cbv();
-	void create_cube();
+	void create_mvp_cbv();
 	void create_srv_cbv_uav_heap(uint32_t descriptor_count);
 	void render();
 	void update();
@@ -43,16 +44,17 @@ public:
 	uint32_t m_current_backbuffer_index = 0;
 	const uint32_t frame_count = 3;
 
-	struct scene_constant_buffer
+	struct object_constant_buffer
 	{
-		DirectX::XMMATRIX model_view_proj;
+		DirectX::XMMATRIX model_view_projection;
 	};
 
 private:
 	mvp_showcase_app();
 
 	void compile_shaders();
-
+	void create_cube();
+	GeometryGenerator::MeshData m_cube;
 	system_info m_system_info;
 	device_resources m_device_resources;
 	std::shared_ptr<cmd_queue> m_cmd_queue;

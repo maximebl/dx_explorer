@@ -49,6 +49,12 @@
     <ClCompile Include="..\external_libs\GeometryGenerator.cpp">
       <Filter>external_libs</Filter>
     </ClCompile>
+    <ClCompile Include="upload_buffer.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -81,6 +87,12 @@
     </ClInclude>
     <ClInclude Include="..\external_libs\GeometryGenerator.h">
       <Filter>external_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="upload_buffer.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

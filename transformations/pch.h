@@ -19,3 +19,4 @@
 #include <winrt/coroutine.h>
 #include <d3d12.h>
 #include <DirectXColors.h>
+#include "../external_libs/d3dx12.h"

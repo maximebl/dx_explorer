@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "mvp_showcase_app.h"
-#include "../external_libs/GeometryGenerator.h"
 
 using namespace winrt;
-using namespace Windows::Foundation;
+using namespace winrt::Windows::Foundation;
 
 mvp_showcase_app::mvp_showcase_app()
 {
@@ -15,7 +14,7 @@ void mvp_showcase_app::compile_shaders()
 {
 	com_ptr<ID3DBlob> new_vertex_shader = nullptr;
 	hstring vs_shader_name = L"default_shader.hlsl";
-	auto shaders_folder = Windows::ApplicationModel::Package::Current().InstalledLocation().Path() + L"\\shaders\\";
+	auto shaders_folder = winrt::Windows::ApplicationModel::Package::Current().InstalledLocation().Path() + L"\\shaders\\";
 	m_shaders[vs_shader_name] = m_device_resources.compile_shader_from_file(shaders_folder + vs_shader_name, "VS", "vs_5_1");
 }
 
@@ -57,9 +56,9 @@ bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainP
 void mvp_showcase_app::load_content()
 {
 	compile_shaders();
-	create_cube();
-	create_cbv();
+	create_mvp_cbv();
 	create_pso();
+	create_cube();
 }
 
 DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
@@ -106,7 +105,6 @@ void mvp_showcase_app::render()
 	//cmd_list->ClearDepthStencilView(m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	cmd_list->OMSetRenderTargets(1, &rtv_handle, true, &dsv_handle);
 
-	cmd_list->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	cmd_list->SetGraphicsRootSignature(m_root_signature.get());
 
 	std::array<ID3D12DescriptorHeap*, 2> descriptor_heaps = { m_srv_cbv_uav_heap.get(), m_device_resources.sampler_heap.get() };
@@ -114,7 +112,7 @@ void mvp_showcase_app::render()
 
 	//set the descriptor tables
 
-	// draw call
+	// draw the cube render_item
 
 	m_device_resources.transition_resource(cmd_list.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -325,7 +323,7 @@ void mvp_showcase_app::create_root_signature()
 		m_root_signature.put_void()));
 }
 
-void mvp_showcase_app::create_cbv()
+void mvp_showcase_app::create_mvp_cbv()
 {
 	//create upload buffer
 	D3D12_HEAP_PROPERTIES upload_heap_props;
@@ -343,7 +341,7 @@ void mvp_showcase_app::create_cbv()
 	cbv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
 	cbv_resource_desc.Height = 1;
 	// align to 256 bytes (minimum hardware allocation size)
-	cbv_resource_desc.Width = (sizeof(scene_constant_buffer) + 255) & ~255;
+	cbv_resource_desc.Width = (sizeof(object_constant_buffer) + 255) & ~255;
 	//Layout must be D3D12_TEXTURE_LAYOUT_ROW_MAJOR when D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER
 	cbv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	cbv_resource_desc.MipLevels = 1;
@@ -363,22 +361,16 @@ void mvp_showcase_app::create_cbv()
 
 	D3D12_RANGE range;
 	range.Begin = 0;
-	range.End = sizeof(scene_constant_buffer);
+	range.End = sizeof(object_constant_buffer);
 	m_mvp_data = nullptr;
 	m_cbv_uploaded_resource->Map(0, &range, reinterpret_cast<void**>(&m_mvp_data));
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
 	cbv_desc.BufferLocation = m_cbv_uploaded_resource->GetGPUVirtualAddress();
 	//Size of 64 is invalid.Device requires SizeInBytes be a multiple of 256
-	cbv_desc.SizeInBytes = (sizeof(scene_constant_buffer) + 255) & ~255;
+	cbv_desc.SizeInBytes = (sizeof(object_constant_buffer) + 255) & ~255;
 
 	m_device_resources.device->CreateConstantBufferView(&cbv_desc, m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart());
-}
-
-void mvp_showcase_app::create_cube()
-{
-	GeometryGenerator geo_gen;
-	GeometryGenerator::MeshData cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
 }
 
 void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
@@ -392,3 +384,19 @@ void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
 	check_hresult(m_device_resources.device->CreateDescriptorHeap(&srv_cbv_uav_heap_desc, guid_of<ID3D12DescriptorHeap>(), m_srv_cbv_uav_heap.put_void()));
 }
 
+void mvp_showcase_app::create_cube()
+{
+	GeometryGenerator geo_gen;
+	m_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
+
+	// upload vertex data to gpu through an upload buffer
+	mesh cube_mesh;
+	m_frame_resources[0]->cmd_list->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr);
+
+	cube_mesh.upload_to_gpu(
+		m_device_resources.device.get(),
+		m_frame_resources[0]->cmd_list.get(),
+		m_cube.Vertices.data(),
+		m_cube.Vertices.size() * sizeof(GeometryGenerator::Vertex));
+	// create vertex buffer view in the render_item
+}

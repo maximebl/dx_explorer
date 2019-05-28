@@ -2,7 +2,7 @@
 #include "ui_helpers.h"
 
 using namespace winrt;
-using namespace Windows::Foundation;
+using namespace winrt::Windows::Foundation;
 
 ui_helpers::ui_helpers()
 {
