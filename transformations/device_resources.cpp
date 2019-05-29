@@ -24,7 +24,7 @@ void device_resources::create_cmd_queue()
 	command_queue = std::make_shared<cmd_queue>(device);
 }
 
-void device_resources::create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, com_ptr<IDXGIFactory7> dxgi_factory)
+void device_resources::create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
 	swapchain_desc.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_IGNORE;
@@ -32,8 +32,8 @@ void device_resources::create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls:
 	swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapchain_desc.Flags = 0;
 	swapchain_desc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapchain_desc.Height = static_cast<UINT>(output_height);
-	swapchain_desc.Width = static_cast<UINT>(output_width);
+	swapchain_desc.Width = width;
+	swapchain_desc.Height = height;
 	swapchain_desc.SampleDesc.Count = 1;
 	swapchain_desc.SampleDesc.Quality = 0;
 	swapchain_desc.Scaling = DXGI_SCALING::DXGI_SCALING_STRETCH;
@@ -57,7 +57,7 @@ void device_resources::create_dsv_heap()
 	);
 }
 
-void device_resources::create_dsv()
+void device_resources::create_dsv(UINT64 width, UINT height)
 {
 	D3D12_RESOURCE_DESC dsv_resource_desc;
 	dsv_resource_desc.Alignment = 0;
@@ -65,8 +65,8 @@ void device_resources::create_dsv()
 	dsv_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	dsv_resource_desc.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 	dsv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
-	dsv_resource_desc.Height = static_cast<UINT>(output_height);
-	dsv_resource_desc.Width = output_width;
+	dsv_resource_desc.Height = height;
+	dsv_resource_desc.Width = width;
 	dsv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	dsv_resource_desc.MipLevels = 1;
 	dsv_resource_desc.SampleDesc.Count = 1;

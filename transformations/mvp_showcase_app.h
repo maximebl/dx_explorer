@@ -17,7 +17,7 @@ public:
 	mvp_showcase_app(mvp_showcase_app &&) = delete;
 	mvp_showcase_app& operator=(mvp_showcase_app &&) = delete;
 
-	bool initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel);
+	bool initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, uint64_t width, uint64_t height);
 	void load_content();
 	void run();
 
@@ -52,6 +52,9 @@ public:
 private:
 	mvp_showcase_app();
 
+	uint64_t m_output_width = 0;
+	uint64_t m_output_height = 0;
+
 	void compile_shaders();
 	void create_cube();
 	GeometryGenerator::MeshData m_cube;
@@ -66,5 +69,7 @@ private:
 	std::byte* m_mvp_data;
 	HANDLE m_render_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
+
+	mesh m_cube_mesh;
 };
 

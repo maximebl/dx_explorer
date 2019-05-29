@@ -22,7 +22,7 @@ mvp_showcase_app::~mvp_showcase_app()
 {
 }
 
-bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel)
+bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, uint64_t width, uint64_t height)
 {
 #if defined(_DEBUG)
 	debug_tools::enable_debug_layer(true);
@@ -34,6 +34,9 @@ bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainP
 		return false;
 	}
 
+	m_output_width = width;
+	m_output_height = height;
+
 	com_ptr<IDXGIAdapter4> adapter = m_system_info.get_high_performance_adapter();
 
 	if (adapter)
@@ -41,8 +44,8 @@ bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainP
 		m_device_resources.create_device(adapter);
 		m_device_resources.create_cmd_queue();
 		m_device_resources.create_dsv_heap();
-		m_device_resources.create_dsv();
-		m_device_resources.create_xaml_swapchain(swapchain_panel, m_system_info.dxgi_factory);
+		m_device_resources.create_dsv(m_output_width, static_cast<UINT>(m_output_height));
+		m_device_resources.create_xaml_swapchain(swapchain_panel, m_system_info.dxgi_factory, static_cast<UINT>(m_output_width), static_cast<UINT>(m_output_height));
 		m_device_resources.create_rtv_heap();
 		m_device_resources.create_rtv();
 		m_device_resources.create_sampler_heap();
@@ -86,13 +89,20 @@ void mvp_showcase_app::render()
 	D3D12_VIEWPORT viewport;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
-	viewport.Width = static_cast<float>(m_device_resources.output_width);
-	viewport.Height = static_cast<float>(m_device_resources.output_height);
+	viewport.Width = static_cast<float>(m_output_width);
+	viewport.Height = static_cast<float>(m_output_height);
 	viewport.MaxDepth = 1.0f;
 	viewport.MinDepth = 0.f;
 	cmd_list->RSSetViewports(1, &viewport);
 
-	// --set the scissor rect
+	//D3D12 WARNING: ID3D12CommandList::DrawInstanced: Viewport: 0 is non-empty while the corresponding scissor rectangle is empty.  
+	//Nothing will be written to the render target when this viewport is selected.  In D3D12, scissor testing is always enabled. [ EXECUTION WARNING #695: DRAW_EMPTY_SCISSOR_RECTANGLE]
+	D3D12_RECT scissor_rect;
+	scissor_rect.top = 0;
+	scissor_rect.left = 0;
+	scissor_rect.right = static_cast<LONG>(m_output_width);
+	scissor_rect.bottom = static_cast<LONG>(m_output_height);
+	cmd_list->RSSetScissorRects(1, &scissor_rect);
 
 	m_device_resources.transition_resource(cmd_list.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
@@ -102,7 +112,7 @@ void mvp_showcase_app::render()
 	D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart();
 
 	cmd_list->ClearRenderTargetView(rtv_handle, DirectX::Colors::BlueViolet, 0, nullptr);
-	//cmd_list->ClearDepthStencilView(m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	cmd_list->ClearDepthStencilView(m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	cmd_list->OMSetRenderTargets(1, &rtv_handle, true, &dsv_handle);
 
 	cmd_list->SetGraphicsRootSignature(m_root_signature.get());
@@ -110,9 +120,14 @@ void mvp_showcase_app::render()
 	std::array<ID3D12DescriptorHeap*, 2> descriptor_heaps = { m_srv_cbv_uav_heap.get(), m_device_resources.sampler_heap.get() };
 	cmd_list->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
-	//set the descriptor tables
-
-	// draw the cube render_item
+	// draw the cube 
+	cmd_list->SetPipelineState(m_pso.get());
+	auto cube_vbv = m_cube_mesh.vertex_buffer_view();
+	cmd_list->IASetVertexBuffers(0, 1, &cube_vbv);
+	cmd_list->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//cmd_list->SetGraphicsRootConstantBufferView(0, m_cbv_uploaded_resource->GetGPUVirtualAddress());
+	cmd_list->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
+	cmd_list->DrawInstanced(m_cube_mesh.vertex_count, 1, 0, 0);
 
 	m_device_resources.transition_resource(cmd_list.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -389,14 +404,15 @@ void mvp_showcase_app::create_cube()
 	GeometryGenerator geo_gen;
 	m_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
 
-	// upload vertex data to gpu through an upload buffer
-	mesh cube_mesh;
 	m_frame_resources[0]->cmd_list->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr);
 
-	cube_mesh.upload_to_gpu(
+	// upload vertex data to gpu through an upload buffer
+	m_cube_mesh.upload_to_gpu(
 		m_device_resources.device.get(),
 		m_frame_resources[0]->cmd_list.get(),
 		m_cube.Vertices.data(),
-		m_cube.Vertices.size() * sizeof(GeometryGenerator::Vertex));
-	// create vertex buffer view in the render_item
+		static_cast<UINT>(sizeof(GeometryGenerator::Vertex)),
+		static_cast<UINT>(m_cube.Vertices.size())
+	);
+	check_hresult(m_frame_resources[0]->cmd_list->Close());
 }

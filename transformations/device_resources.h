@@ -11,10 +11,10 @@ public:
 
 	void create_device(winrt::com_ptr<IDXGIAdapter4> adapter);
 	void create_cmd_queue();
-	void create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, winrt::com_ptr<IDXGIFactory7> dxgi_factory);
+	void create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, winrt::com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height);
 
 	void create_dsv_heap();
-	void create_dsv();
+	void create_dsv(UINT64 width, UINT height);
 
 	void create_rtv_heap();
 	void create_rtv();
@@ -32,8 +32,6 @@ public:
 	std::shared_ptr<cmd_queue> command_queue;
 	winrt::com_ptr<ID3D12Device5> device;
 	winrt::com_ptr<ID3D12DescriptorHeap> sampler_heap;
-	uint64_t output_width = 512;
-	uint64_t output_height = 512;
 	winrt::com_ptr<ID3D12DescriptorHeap> dsv_heap;
 	winrt::com_ptr<ID3D12DescriptorHeap> rtv_heap;
 	constexpr static uint8_t buffer_count = 3;

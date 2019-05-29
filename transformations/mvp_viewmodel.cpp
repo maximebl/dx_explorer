@@ -12,7 +12,7 @@ namespace winrt::transformations::implementation
 	{
 		m_initialize_app.ExecuteRequested(
 			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
-				if (!app.initialize(m_current_swapchain_panel))
+				if (!app.initialize(m_current_swapchain_panel, 512, 512))
 				{
 					co_await ui_helpers::show_error_dialog(L"Failed to verify DirectX Math library support.", L"CPU not supported");
 					co_return;

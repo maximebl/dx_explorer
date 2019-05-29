@@ -22,6 +22,7 @@ public:
 	winrt::com_ptr<ID3D12Resource> vertex_default = nullptr;
 	UINT vertex_byte_stride = 0;
 	UINT vertex_byte_size = 0;
+	UINT vertex_count;
 
 	winrt::com_ptr<ID3D12Resource> index_uploader = nullptr;
 	winrt::com_ptr<ID3D12Resource> index_default = nullptr;
@@ -45,6 +46,6 @@ public:
 		ibv.Format = index_format;
 	}
 
-	void upload_to_gpu(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmd_list, void* vertex_data, size_t vertex_byte_size);
+	void upload_to_gpu(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmd_list, void* vertex_data, UINT stride, UINT element_count);
 };
 
