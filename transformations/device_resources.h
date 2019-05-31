@@ -10,8 +10,7 @@ public:
 	~device_resources();
 
 	void create_device(winrt::com_ptr<IDXGIAdapter4> adapter);
-	void create_cmd_queue();
-	void create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, winrt::com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height);
+	void create_xaml_swapchain(std::shared_ptr<cmd_queue>& cmd_queue, winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, winrt::com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height);
 
 	void create_dsv_heap();
 	void create_dsv(UINT64 width, UINT height);
@@ -29,8 +28,7 @@ public:
 	ID3D12Resource* get_render_target(uint32_t index);
 	D3D12_CPU_DESCRIPTOR_HANDLE get_current_rtv(uint32_t index);
 
-	std::shared_ptr<cmd_queue> command_queue;
-	winrt::com_ptr<ID3D12Device5> device;
+	winrt::com_ptr<ID3D12Device> device;
 	winrt::com_ptr<ID3D12DescriptorHeap> sampler_heap;
 	winrt::com_ptr<ID3D12DescriptorHeap> dsv_heap;
 	winrt::com_ptr<ID3D12DescriptorHeap> rtv_heap;

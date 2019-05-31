@@ -46,6 +46,6 @@ public:
 		ibv.Format = index_format;
 	}
 
-	void upload_to_gpu(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmd_list, void* vertex_data, UINT stride, UINT element_count);
+	void upload_to_gpu(ID3D12Device* device, ID3D12GraphicsCommandList4* cmd_list, void* vertex_data, UINT stride, UINT element_count);
 };
 

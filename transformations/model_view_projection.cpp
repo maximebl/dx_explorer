@@ -7,16 +7,18 @@ using namespace winrt::Windows::UI::Xaml;
 
 namespace winrt::transformations::implementation
 {
-    model_view_projection::model_view_projection()
-    {
-        InitializeComponent();
-
-		m_vm = winrt::make<transformations::implementation::mvp_viewmodel>();
-		m_vm.Title(L"sup");
-		m_vm.current_swapchain_panel(swapchain_panel());
+	model_view_projection::model_view_projection()
+	{
+		InitializeComponent();
 
 		DataContext(m_vm);
-    }
+		m_vm.Title(L"supz");
+		m_vm.current_swapchain_panel(swapchain_panel());
+
+		m_app.initialize(swapchain_panel(), 512, 512);
+		m_app.load_content();
+		m_app.run();
+	}
 
 	transformations::mvp_viewmodel model_view_projection::vm()
 	{

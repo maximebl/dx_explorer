@@ -10,6 +10,10 @@ mvp_showcase_app::mvp_showcase_app()
 	m_device_resources = device_resources();
 }
 
+mvp_showcase_app::~mvp_showcase_app()
+{
+}
+
 void mvp_showcase_app::compile_shaders()
 {
 	com_ptr<ID3DBlob> new_vertex_shader = nullptr;
@@ -18,8 +22,21 @@ void mvp_showcase_app::compile_shaders()
 	m_shaders[vs_shader_name] = m_device_resources.compile_shader_from_file(shaders_folder + vs_shader_name, "VS", "vs_5_1");
 }
 
-mvp_showcase_app::~mvp_showcase_app()
+void mvp_showcase_app::create_cmd_objects()
 {
+	m_cmd_queue = std::make_shared<cmd_queue>(m_device_resources.device);
+
+	check_hresult(
+		m_device_resources.device->CreateCommandList(
+			0,
+			D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
+			m_frame_resources[m_frame_resource_index]->cmd_allocator.get(),
+			nullptr,
+			guid_of<ID3D12GraphicsCommandList>(),
+			m_graphics_cmdlist.put_void())
+	);
+
+	check_hresult(m_graphics_cmdlist->Close());
 }
 
 bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, uint64_t width, uint64_t height)
@@ -37,21 +54,33 @@ bool mvp_showcase_app::initialize(winrt::Windows::UI::Xaml::Controls::SwapChainP
 	m_output_width = width;
 	m_output_height = height;
 
+	m_viewport.TopLeftX = 0;
+	m_viewport.TopLeftY = 0;
+	m_viewport.Width = static_cast<float>(m_output_width);
+	m_viewport.Height = static_cast<float>(m_output_height);
+	m_viewport.MaxDepth = 1.0f;
+	m_viewport.MinDepth = 0.f;
+
+	m_scissor_rect.top = 0;
+	m_scissor_rect.left = 0;
+	m_scissor_rect.right = static_cast<LONG>(m_output_width);
+	m_scissor_rect.bottom = static_cast<LONG>(m_output_height);
+
 	com_ptr<IDXGIAdapter4> adapter = m_system_info.get_high_performance_adapter();
 
 	if (adapter)
 	{
 		m_device_resources.create_device(adapter);
-		m_device_resources.create_cmd_queue();
+		build_frame_resources();
+		create_cmd_objects();
 		m_device_resources.create_dsv_heap();
 		m_device_resources.create_dsv(m_output_width, static_cast<UINT>(m_output_height));
-		m_device_resources.create_xaml_swapchain(swapchain_panel, m_system_info.dxgi_factory, static_cast<UINT>(m_output_width), static_cast<UINT>(m_output_height));
+		m_device_resources.create_xaml_swapchain(m_cmd_queue, swapchain_panel, m_system_info.dxgi_factory, static_cast<UINT>(m_output_width), static_cast<UINT>(m_output_height));
 		m_device_resources.create_rtv_heap();
 		m_device_resources.create_rtv();
 		m_device_resources.create_sampler_heap();
 		m_device_resources.create_sampler();
 		create_srv_cbv_uav_heap(1);
-		build_frame_resources();
 		create_root_signature();
 	}
 }
@@ -76,79 +105,58 @@ DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
 	return 0;
 }
 
+void mvp_showcase_app::update()
+{
+	m_current_frame_resource = m_frame_resources[m_frame_resource_index].get();
+	//m_mvp_data = ...
+}
+
 void mvp_showcase_app::render()
 {
-	auto cmd_queue = m_device_resources.command_queue;
-	auto cmd_allocator = m_current_frame_resource->cmd_allocator;
-	auto cmd_list = m_current_frame_resource->cmd_list;
-	auto pso = m_current_frame_resource->pso;
+	check_hresult(m_current_frame_resource->cmd_allocator->Reset());
+	check_hresult(m_graphics_cmdlist->Reset(m_current_frame_resource->cmd_allocator.get(), nullptr));
 
-	check_hresult(cmd_allocator->Reset());
-	check_hresult(cmd_list->Reset(cmd_allocator.get(), pso.get()));
-
-	D3D12_VIEWPORT viewport;
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = static_cast<float>(m_output_width);
-	viewport.Height = static_cast<float>(m_output_height);
-	viewport.MaxDepth = 1.0f;
-	viewport.MinDepth = 0.f;
-	cmd_list->RSSetViewports(1, &viewport);
+	m_graphics_cmdlist->RSSetViewports(1, &m_viewport);
 
 	//D3D12 WARNING: ID3D12CommandList::DrawInstanced: Viewport: 0 is non-empty while the corresponding scissor rectangle is empty.  
 	//Nothing will be written to the render target when this viewport is selected.  In D3D12, scissor testing is always enabled. [ EXECUTION WARNING #695: DRAW_EMPTY_SCISSOR_RECTANGLE]
-	D3D12_RECT scissor_rect;
-	scissor_rect.top = 0;
-	scissor_rect.left = 0;
-	scissor_rect.right = static_cast<LONG>(m_output_width);
-	scissor_rect.bottom = static_cast<LONG>(m_output_height);
-	cmd_list->RSSetScissorRects(1, &scissor_rect);
+	m_graphics_cmdlist->RSSetScissorRects(1, &m_scissor_rect);
 
-	m_device_resources.transition_resource(cmd_list.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
+	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT,
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = m_device_resources.get_current_rtv(m_current_backbuffer_index);
 	D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart();
+	m_graphics_cmdlist->ClearRenderTargetView(rtv_handle, DirectX::Colors::Red, 0, nullptr);
+	m_graphics_cmdlist->ClearDepthStencilView(m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	m_graphics_cmdlist->OMSetRenderTargets(1, &rtv_handle, true, &dsv_handle);
 
-	cmd_list->ClearRenderTargetView(rtv_handle, DirectX::Colors::BlueViolet, 0, nullptr);
-	cmd_list->ClearDepthStencilView(m_device_resources.dsv_heap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	cmd_list->OMSetRenderTargets(1, &rtv_handle, true, &dsv_handle);
-
-	cmd_list->SetGraphicsRootSignature(m_root_signature.get());
+	m_graphics_cmdlist->SetGraphicsRootSignature(m_root_signature.get());
 
 	std::array<ID3D12DescriptorHeap*, 2> descriptor_heaps = { m_srv_cbv_uav_heap.get(), m_device_resources.sampler_heap.get() };
-	cmd_list->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
+	m_graphics_cmdlist->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
 	// draw the cube 
-	cmd_list->SetPipelineState(m_pso.get());
-	auto cube_vbv = m_cube_mesh.vertex_buffer_view();
-	cmd_list->IASetVertexBuffers(0, 1, &cube_vbv);
-	cmd_list->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_graphics_cmdlist->SetPipelineState(m_pso.get());
+	//auto cube_vbv = m_cube_mesh.vertex_buffer_view();
+	//m_device_resources.m_graphics_cmdlist->IASetVertexBuffers(0, 1, &cube_vbv);
+	//m_device_resources.m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//cmd_list->SetGraphicsRootConstantBufferView(0, m_cbv_uploaded_resource->GetGPUVirtualAddress());
-	cmd_list->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
-	cmd_list->DrawInstanced(m_cube_mesh.vertex_count, 1, 0, 0);
+	//m_device_resources.m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
+	//m_device_resources.m_graphics_cmdlist->DrawInstanced(m_cube_mesh.vertex_count, 1, 0, 0);
 
-	m_device_resources.transition_resource(cmd_list.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
+	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
 
-	cmd_queue->execute_cmd_list(cmd_list);
-
+	m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
 	m_current_backbuffer_index = m_device_resources.present();
 
-	m_current_frame_resource->fence_value = cmd_queue->signal();
-}
-
-void mvp_showcase_app::update()
-{
+	// next frame
+	m_current_frame_resource->fence_value = m_cmd_queue->signal_here();
+	m_cmd_queue->wait_for_fence_value(m_current_frame_resource->fence_value);
 	m_frame_resource_index = (m_frame_resource_index + 1) % frame_count;
-	m_current_frame_resource = m_frame_resources[m_frame_resource_index].get();
-	// Resources still scheduled for GPU execution cannot be modified or else undefined behavior will result.
-	// Wait for the gpu to finish work for the previous frame resource.
-	m_device_resources.command_queue->wait_for_fence_value(m_current_frame_resource->fence_value);
-
-	//m_mvp_data = ...
 }
 
 void mvp_showcase_app::run()
@@ -161,7 +169,7 @@ void mvp_showcase_app::build_frame_resources()
 	for (uint32_t i = 0; i < frame_count; ++i)
 	{
 		m_frame_resources.push_back(
-			std::make_unique<frame_resource>(m_device_resources.device, nullptr)
+			std::make_unique<frame_resource>(m_device_resources.device)
 		);
 	}
 }
@@ -404,15 +412,15 @@ void mvp_showcase_app::create_cube()
 	GeometryGenerator geo_gen;
 	m_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
 
-	m_frame_resources[0]->cmd_list->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr);
+	//m_frame_resources[0]->cmd_list->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr);
 
 	// upload vertex data to gpu through an upload buffer
-	m_cube_mesh.upload_to_gpu(
-		m_device_resources.device.get(),
-		m_frame_resources[0]->cmd_list.get(),
-		m_cube.Vertices.data(),
-		static_cast<UINT>(sizeof(GeometryGenerator::Vertex)),
-		static_cast<UINT>(m_cube.Vertices.size())
-	);
-	check_hresult(m_frame_resources[0]->cmd_list->Close());
+	//m_cube_mesh.upload_to_gpu(
+	//	m_device_resources.device.get(),
+	//	m_frame_resources[0]->cmd_list.get(),
+	//	m_cube.Vertices.data(),
+	//	static_cast<UINT>(sizeof(GeometryGenerator::Vertex)),
+	//	static_cast<UINT>(m_cube.Vertices.size())
+	//);
+	//check_hresult(m_frame_resources[0]->cmd_list->Close());
 }

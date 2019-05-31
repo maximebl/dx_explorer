@@ -12,14 +12,9 @@ namespace winrt::transformations::implementation
 	{
 		m_initialize_app.ExecuteRequested(
 			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
-				if (!app.initialize(m_current_swapchain_panel, 512, 512))
-				{
-					co_await ui_helpers::show_error_dialog(L"Failed to verify DirectX Math library support.", L"CPU not supported");
-					co_return;
-				}
-				app.load_content();
-				app.run();
-			});
+			initialize();
+			co_return;
+		});
 	}
 
 	hstring mvp_viewmodel::Title()
@@ -45,5 +40,17 @@ namespace winrt::transformations::implementation
 	void mvp_viewmodel::current_swapchain_panel(Windows::UI::Xaml::Controls::SwapChainPanel value)
 	{
 		m_current_swapchain_panel = value;
+	}
+
+	IAsyncAction mvp_viewmodel::initialize()
+	{
+		//if (!app.initialize(m_current_swapchain_panel, 512, 512))
+		//{
+		//	co_await ui_helpers::show_error_dialog(L"Failed to verify DirectX Math library support.", L"CPU not supported");
+		//	co_return;
+		//}
+		//app.load_content();
+		//co_await app.run();
+		co_return;
 	}
 }

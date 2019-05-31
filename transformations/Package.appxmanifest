@@ -1,10 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity
-    Name="eed3565e-bcdb-4801-9e7c-6e2693ed0161"
-    Publisher="CN=maxim"
-    Version="1.0.0.0" />
-  <mp:PhoneIdentity PhoneProductId="eed3565e-bcdb-4801-9e7c-6e2693ed0161" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6" xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3" xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" xmlns:uap4="http://schemas.microsoft.com/appx/manifest/uap/windows10/4" xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" xmlns:mobile="http://schemas.microsoft.com/appx/manifest/mobile/windows10" IgnorableNamespaces="uap mp uap6 uap3 iot uap4 uap2 mobile">
+  <Identity Name="eed3565e-bcdb-4801-9e7c-6e2693ed0161" Publisher="CN=maxim" Version="1.0.0.0" />
+  <mp:PhoneIdentity PhoneProductId="eed3565e-bcdb-4801-9e7c-6e2693ed0161" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>transformations</DisplayName>
     <PublisherDisplayName>maxim</PublisherDisplayName>
@@ -18,8 +15,7 @@
   </Resources>
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="transformations.App">
-      <uap:VisualElements DisplayName="transformations" Description="Project for a single page C++/WinRT Universal Windows Platform (UWP) app with no predefined layout"
-        Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" BackgroundColor="transparent">
+      <uap:VisualElements DisplayName="transformations" Description="Project for a single page C++/WinRT Universal Windows Platform (UWP) app with no predefined layout" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png">
         </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
@@ -28,5 +24,42 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <Capability Name="allJoyn" />
+    <Capability Name="codeGeneration" />
+    <Capability Name="internetClientServer" />
+    <Capability Name="privateNetworkClientServer" />
+    <uap6:Capability Name="graphicsCapture" />
+    <uap:Capability Name="appointments" />
+    <uap3:Capability Name="backgroundMediaPlayback" />
+    <uap:Capability Name="blockedChatMessages" />
+    <uap:Capability Name="chat" />
+    <uap:Capability Name="contacts" />
+    <uap:Capability Name="enterpriseAuthentication" />
+    <iot:Capability Name="lowLevelDevices" />
+    <uap:Capability Name="musicLibrary" />
+    <uap:Capability Name="objects3D" />
+    <uap4:Capability Name="offlineMapsManagement" />
+    <uap:Capability Name="phoneCall" />
+    <uap2:Capability Name="phoneCallHistoryPublic" />
+    <uap:Capability Name="picturesLibrary" />
+    <mobile:Capability Name="recordedCallsFolder" />
+    <uap3:Capability Name="remoteSystem" />
+    <uap:Capability Name="removableStorage" />
+    <uap:Capability Name="sharedUserCertificates" />
+    <uap:Capability Name="voipCall" />
+    <uap:Capability Name="videosLibrary" />
+    <uap3:Capability Name="userNotificationListener" />
+    <uap4:Capability Name="userDataTasks" />
+    <uap:Capability Name="userAccountInformation" />
+    <iot:Capability Name="systemManagement" />
+    <uap2:Capability Name="spatialPerception" />
+    <DeviceCapability Name="bluetooth" />
+    <DeviceCapability Name="gazeInput" />
+    <DeviceCapability Name="location" />
+    <DeviceCapability Name="lowLevel" />
+    <DeviceCapability Name="microphone" />
+    <DeviceCapability Name="pointOfService" />
+    <DeviceCapability Name="proximity" />
+    <DeviceCapability Name="webcam" />
   </Capabilities>
 </Package>

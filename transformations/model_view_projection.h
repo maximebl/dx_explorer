@@ -2,6 +2,7 @@
 
 #include "model_view_projection.g.h"
 #include "mvp_viewmodel.h"
+#include "mvp_showcase_app.h"
 
 namespace winrt::transformations::implementation
 {
@@ -12,7 +13,8 @@ namespace winrt::transformations::implementation
 		transformations::mvp_viewmodel vm();
 
 	private:
-		transformations::mvp_viewmodel m_vm = nullptr;
+		transformations::mvp_viewmodel m_vm = winrt::make<transformations::implementation::mvp_viewmodel>();
+		mvp_showcase_app& m_app = mvp_showcase_app::get_instance();
 	};
 }
 

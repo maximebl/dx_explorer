@@ -15,16 +15,11 @@ device_resources::~device_resources()
 
 void device_resources::create_device(winrt::com_ptr<IDXGIAdapter4> adapter)
 {
-	check_hresult(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_1, guid_of<ID3D12Device5>(), device.put_void()));
+	check_hresult(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_1, guid_of<ID3D12Device>(), device.put_void()));
 	m_rtv_increment_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void device_resources::create_cmd_queue()
-{
-	command_queue = std::make_shared<cmd_queue>(device);
-}
-
-void device_resources::create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height)
+void device_resources::create_xaml_swapchain(std::shared_ptr<cmd_queue>& cmd_queue, winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height)
 {
 	DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
 	swapchain_desc.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_IGNORE;
@@ -40,7 +35,7 @@ void device_resources::create_xaml_swapchain(winrt::Windows::UI::Xaml::Controls:
 	swapchain_desc.Stereo = false;
 	swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT::DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 
-	check_hresult(dxgi_factory->CreateSwapChainForComposition(command_queue->get_cmd_queue().get(), &swapchain_desc, nullptr, m_swapchain.put()));
+	check_hresult(dxgi_factory->CreateSwapChainForComposition(cmd_queue->get_cmd_queue().get(), &swapchain_desc, nullptr, m_swapchain.put()));
 	check_hresult(swapchain_panel.as<ISwapChainPanelNative>()->SetSwapChain(m_swapchain.get()));
 }
 

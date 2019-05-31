@@ -20,8 +20,9 @@ namespace winrt::transformations::implementation
 		hstring m_title;
 		Windows::UI::Xaml::Input::XamlUICommand m_initialize_app;
 		Windows::UI::Xaml::Controls::SwapChainPanel m_current_swapchain_panel;
+		winrt::Windows::Foundation::IAsyncAction initialize();
 
-		mvp_showcase_app& app = mvp_showcase_app::get_instance();
+		//mvp_showcase_app& app = mvp_showcase_app::get_instance();
 	};
 }
 namespace winrt::transformations::factory_implementation

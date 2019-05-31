@@ -10,6 +10,7 @@
 class mvp_showcase_app
 {
 public:
+	bool test = true;
 	~mvp_showcase_app();
 
 	mvp_showcase_app(const mvp_showcase_app&) = delete;
@@ -37,7 +38,7 @@ public:
 		return s_app;
 	}
 
-	uint64_t m_fence_value = 0;
+	//uint64_t m_fence_value = 0;
 	std::vector<std::unique_ptr<frame_resource>> m_frame_resources;
 	frame_resource* m_current_frame_resource;
 	uint32_t m_frame_resource_index = 0;
@@ -52,20 +53,25 @@ public:
 private:
 	mvp_showcase_app();
 
+	D3D12_VIEWPORT m_viewport;
+	D3D12_RECT m_scissor_rect;
 	uint64_t m_output_width = 0;
 	uint64_t m_output_height = 0;
 
 	void compile_shaders();
+	void create_cmd_objects();
 	void create_cube();
 	GeometryGenerator::MeshData m_cube;
 	system_info m_system_info;
 	device_resources m_device_resources;
-	std::shared_ptr<cmd_queue> m_cmd_queue;
 
-	winrt::com_ptr<ID3D12RootSignature> m_root_signature;
-	winrt::com_ptr<ID3D12DescriptorHeap> m_srv_cbv_uav_heap;
-	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource;
-	winrt::com_ptr<ID3D12PipelineState> m_pso;
+	std::shared_ptr<cmd_queue> m_cmd_queue = nullptr;
+	winrt::com_ptr<ID3D12GraphicsCommandList4> m_graphics_cmdlist = nullptr;
+
+	winrt::com_ptr<ID3D12RootSignature> m_root_signature = nullptr;
+	winrt::com_ptr<ID3D12DescriptorHeap> m_srv_cbv_uav_heap = nullptr;
+	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource = nullptr;
+	winrt::com_ptr<ID3D12PipelineState> m_pso = nullptr;
 	std::byte* m_mvp_data;
 	HANDLE m_render_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
