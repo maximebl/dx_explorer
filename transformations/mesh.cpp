@@ -25,6 +25,8 @@ void mesh::upload_to_gpu(ID3D12Device* device, ID3D12GraphicsCommandList4* cmd_l
 		guid_of<ID3D12Resource>(),
 		vertex_uploader.put_void()));
 
+	check_hresult(vertex_uploader->SetName(L"vertex_buffer_uploader"));
+
 	//TODO: should we keep a reference of the system data or just upload?
 	vertex_uploader->Map(0, nullptr, &vertex_allocation.CPU);
 	memcpy(vertex_allocation.CPU, vertex_data, vertex_byte_size);
@@ -37,6 +39,8 @@ void mesh::upload_to_gpu(ID3D12Device* device, ID3D12GraphicsCommandList4* cmd_l
 		nullptr,
 		guid_of<ID3D12Resource>(),
 		vertex_default.put_void()));
+
+	check_hresult(vertex_default->SetName(L"vertex_default_buffer"));
 
 	D3D12_SUBRESOURCE_DATA subresource_data;
 	subresource_data.pData = vertex_allocation.CPU;

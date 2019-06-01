@@ -139,12 +139,12 @@ void mvp_showcase_app::render()
 
 	// draw the cube 
 	m_graphics_cmdlist->SetPipelineState(m_pso.get());
-	//auto cube_vbv = m_cube_mesh.vertex_buffer_view();
-	//m_device_resources.m_graphics_cmdlist->IASetVertexBuffers(0, 1, &cube_vbv);
-	//m_device_resources.m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//cmd_list->SetGraphicsRootConstantBufferView(0, m_cbv_uploaded_resource->GetGPUVirtualAddress());
-	//m_device_resources.m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
-	//m_device_resources.m_graphics_cmdlist->DrawInstanced(m_cube_mesh.vertex_count, 1, 0, 0);
+	auto cube_vbv = m_cube_mesh.vertex_buffer_view();
+	m_graphics_cmdlist->IASetVertexBuffers(0, 1, &cube_vbv);
+	m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//m_graphics_cmdlist->SetGraphicsRootConstantBufferView(0, m_cbv_uploaded_resource->GetGPUVirtualAddress());
+	m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
+	m_graphics_cmdlist->DrawInstanced(m_cube_mesh.vertex_count, 1, 0, 0);
 
 	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -412,15 +412,16 @@ void mvp_showcase_app::create_cube()
 	GeometryGenerator geo_gen;
 	m_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
 
-	//m_frame_resources[0]->cmd_list->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr);
+	check_hresult(m_graphics_cmdlist->Reset(m_frame_resources[0]->cmd_allocator.get(), nullptr));
 
 	// upload vertex data to gpu through an upload buffer
-	//m_cube_mesh.upload_to_gpu(
-	//	m_device_resources.device.get(),
-	//	m_frame_resources[0]->cmd_list.get(),
-	//	m_cube.Vertices.data(),
-	//	static_cast<UINT>(sizeof(GeometryGenerator::Vertex)),
-	//	static_cast<UINT>(m_cube.Vertices.size())
-	//);
-	//check_hresult(m_frame_resources[0]->cmd_list->Close());
+	m_cube_mesh.upload_to_gpu(
+		m_device_resources.device.get(),
+		m_graphics_cmdlist.get(),
+		m_cube.Vertices.data(),
+		static_cast<UINT>(sizeof(GeometryGenerator::Vertex)),
+		static_cast<UINT>(m_cube.Vertices.size())
+	);
+
+	check_hresult(m_graphics_cmdlist->Close());
 }
