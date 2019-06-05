@@ -22,7 +22,15 @@ public:
 	void create_sampler();
 
 	void transition_resource(ID3D12GraphicsCommandList4* cmd_list, ID3D12Resource* resource, D3D12_RESOURCE_STATES state_before, D3D12_RESOURCE_STATES state_after);
+	void resize_rtv(UINT width, UINT height);
 	uint32_t present();
+
+	void create_default_buffer(ID3D12Device* device, 
+		ID3D12GraphicsCommandList* cmd_list, 
+		CD3DX12_RESOURCE_DESC* resource_desc, 
+		const void* data, 
+		ID3D12Resource** upload_buffer, 
+		ID3D12Resource** default_buffer);
 
 	winrt::com_ptr<ID3DBlob> compile_shader_from_file(winrt::hstring filename, std::string entry_point, std::string target);
 	ID3D12Resource* get_render_target(uint32_t index);
@@ -40,5 +48,6 @@ private:
 	winrt::com_ptr<IDXGISwapChain1> m_swapchain;
 	std::array<winrt::com_ptr<ID3D12Resource>, buffer_count> m_swapchain_buffers;
 	UINT m_rtv_increment_size;
+	DXGI_FORMAT m_back_buffer_format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 };
 

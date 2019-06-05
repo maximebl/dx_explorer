@@ -3,6 +3,5 @@ namespace transformations
 	unsealed runtimeclass bindable_base : Windows.UI.Xaml.DependencyObject, Windows.UI.Xaml.Data.INotifyPropertyChanged
 	{
 		bindable_base();
-		protected void RaisePropertyChanged(String propertyName);
 	}
 }

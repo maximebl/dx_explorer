@@ -7,9 +7,99 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <TextBox Text="{x:Bind vm.Title, Mode=TwoWay}" />
-        <Button Content="initialize app" Command="{x:Bind vm.initialize_app}" CommandParameter="{x:Bind vm.Title, Mode=OneWay}"/>
-        <SwapChainPanel x:Name="swapchain_panel" Width="512" Height="512"/>
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top">
+        <MenuBar>
+            <MenuBarItem Title="File">
+                <MenuFlyoutSubItem Text="New">
+                    <MenuFlyoutItem Text="Plain Text Document"/>
+                    <MenuFlyoutItem Text="Rich Text Document"/>
+                    <MenuFlyoutItem Text="Other Formats..."/>
+                </MenuFlyoutSubItem>
+                <MenuFlyoutItem Text="Open..."/>
+                <MenuFlyoutItem Text="Save"/>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Exit"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Undo"/>
+                <MenuFlyoutItem Text="Cut"/>
+                <MenuFlyoutItem Text="Copy"/>
+                <MenuFlyoutItem Text="Paste"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="View">
+                <MenuFlyoutItem Text="Output"/>
+                <MenuFlyoutSeparator/>
+                <ToggleMenuFlyoutItem Text="tester" />
+            </MenuBarItem>
+
+            <MenuBarItem Title="Help">
+                <MenuFlyoutItem Text="About"/>
+            </MenuBarItem>
+        </MenuBar>
+
+        <CheckBox IsChecked="{x:Bind vm.options_visible, Mode=TwoWay}"></CheckBox>
+        <Button Content="initialize app" Command="{x:Bind vm.initialize_app}" CommandParameter="{x:Bind vm.eye_position_x, Mode=OneWay}"/>
+        <Canvas Width="auto" Height="auto">
+            <StackPanel 
+                    Canvas.ZIndex="1"
+                    Visibility="{x:Bind vm.options_visible, Mode=OneWay}"
+                    Orientation="Vertical" 
+                    Background="{ThemeResource CustomAcrylicBrush}" 
+                    BackgroundSizing="InnerBorderEdge"
+                    BorderBrush="{ThemeResource SystemControlBackgroundAccentRevealBorderBrush}" 
+                    BorderThickness="1"
+                    MinWidth="300"
+                    MaxWidth="400"
+                    HorizontalAlignment="Right">
+                <StackPanel.ChildrenTransitions>
+                    <EntranceThemeTransition IsStaggeringEnabled="True" />
+                </StackPanel.ChildrenTransitions>
+                <ScrollViewer Height="500" VerticalScrollBarVisibility="Auto" Padding="20">
+                    <StackPanel>
+                        <StackPanel Orientation="Vertical" Padding="0,0,0,20">
+                            <TextBlock FontWeight="ExtraBlack" Text="Model matrix"/>
+                            <local:scalar_slider label="Angle" scalar_value="{x:Bind vm.angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1"/>
+                            <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind vm.rotation_axis_x, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
+                            <local:scalar_slider label="Rotation axis Y" scalar_value="{x:Bind vm.rotation_axis_y, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
+                            <local:scalar_slider label="Rotation axis Z" scalar_value="{x:Bind vm.rotation_axis_z, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Padding="0,0,0,20">
+                            <TextBlock FontWeight="ExtraBlack" Text="View matrix" />
+                            <local:scalar_slider label="Eye position X" scalar_value="{x:Bind vm.eye_position_x, Mode=TwoWay}" scalar_min="-10" scalar_max="10" step_frequency="0.1"/>
+                            <local:scalar_slider label="Eye position Y" scalar_value="{x:Bind vm.eye_position_y, Mode=TwoWay}" scalar_min="-10" scalar_max="10" step_frequency="0.1"/>
+                            <local:scalar_slider label="Eye position Z" scalar_value="{x:Bind vm.eye_position_z, Mode=TwoWay}" scalar_min="-10" scalar_max="-1" step_frequency="0.1"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Up direction" FontSize="12"/>
+                                <RadioButton Content="X" Tag="X" GroupName="up_direction" />
+                                <RadioButton Content="Y" Tag="Y" GroupName="up_direction" />
+                                <RadioButton Content="Z" Tag="Z" GroupName="up_direction" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Padding="0,0,0,20">
+                            <TextBlock FontWeight="ExtraBlack" Text="Projection matrix"/>
+                            <local:scalar_slider label="Field of view" scalar_value="{x:Bind vm.field_of_view, Mode=TwoWay}" scalar_min="1" scalar_max="120" step_frequency="1"/>
+                            <local:scalar_slider label="Near Z" scalar_value="{x:Bind vm.near_z, Mode=TwoWay}" scalar_min="0.1" scalar_max="10" step_frequency="0.1"/>
+                            <local:scalar_slider label="Far Z" scalar_value="{x:Bind vm.far_z, Mode=TwoWay}" scalar_min="0.1" scalar_max="300" step_frequency="0.1"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Vertical" Padding="0,0,0,20">
+                            <TextBlock FontWeight="ExtraBlack" Text="Viewport"/>
+                            <local:scalar_slider label="Viewport width" scalar_value="{x:Bind vm.viewport_width, Mode=TwoWay}" scalar_min="4" scalar_max="1024" step_frequency="2"/>
+                            <local:scalar_slider label="Viewport height" scalar_value="{x:Bind vm.viewport_height, Mode=TwoWay}" scalar_min="4" scalar_max="1024" step_frequency="2"/>
+                            <local:scalar_slider label="Scissor rect width" scalar_value="{x:Bind vm.scissor_rect_width, Mode=TwoWay}" scalar_min="4" scalar_max="1024" step_frequency="2"/>
+                            <local:scalar_slider label="Scissor rect height" scalar_value="{x:Bind vm.scissor_rect_height, Mode=TwoWay}" scalar_min="4" scalar_max="1024" step_frequency="2"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                </ScrollViewer>
+            </StackPanel>
+            <SwapChainPanel x:Name="swapchain_panel" Canvas.ZIndex="0" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                            Width="{x:Bind vm.viewport_width, Mode=TwoWay}" 
+                            Height="{x:Bind vm.viewport_height, Mode=TwoWay}"/>
+        </Canvas>
     </StackPanel>
 </Page>

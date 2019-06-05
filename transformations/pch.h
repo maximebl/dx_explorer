@@ -20,3 +20,6 @@
 #include <d3d12.h>
 #include <DirectXColors.h>
 #include "../external_libs/d3dx12.h"
+
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Microsoft.UI.Xaml.XamlTypeInfo.h>

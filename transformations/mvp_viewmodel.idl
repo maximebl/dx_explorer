@@ -6,8 +6,28 @@ namespace transformations
 	{
 		mvp_viewmodel();
 
-		String Title;
 		Windows.UI.Xaml.Input.XamlUICommand initialize_app{ get; };
 		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
+
+		Boolean options_visible;
+
+		Single eye_position_x;
+		Single eye_position_y;
+		Single eye_position_z;
+
+		Single angle;
+		Single rotation_axis_x;
+		Single rotation_axis_y;
+		Single rotation_axis_z;
+
+		Single viewport_width;
+		Single viewport_height;
+
+		Single scissor_rect_width;
+		Single scissor_rect_height;
+
+		Single field_of_view;
+		Single near_z;
+		Single far_z;
 	}
 }

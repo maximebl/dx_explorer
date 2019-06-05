@@ -23,29 +23,13 @@ public:
 	UINT vertex_byte_stride = 0;
 	UINT vertex_byte_size = 0;
 	UINT vertex_count;
+	D3D12_VERTEX_BUFFER_VIEW vbv;
 
 	winrt::com_ptr<ID3D12Resource> index_uploader = nullptr;
 	winrt::com_ptr<ID3D12Resource> index_default = nullptr;
+	UINT index_count = 0;
 	UINT index_byte_size = 0;
 	DXGI_FORMAT index_format = DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
-
-	D3D12_VERTEX_BUFFER_VIEW vertex_buffer_view()
-	{
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = vertex_default->GetGPUVirtualAddress();
-		vbv.StrideInBytes = vertex_byte_stride;
-		vbv.SizeInBytes = vertex_byte_size;
-		return vbv;
-	}
-
-	D3D12_INDEX_BUFFER_VIEW index_buffer_view()
-	{
-		D3D12_INDEX_BUFFER_VIEW ibv;
-		ibv.BufferLocation = index_default->GetGPUVirtualAddress();
-		ibv.SizeInBytes = index_byte_size;
-		ibv.Format = index_format;
-	}
-
-	void upload_to_gpu(ID3D12Device* device, ID3D12GraphicsCommandList4* cmd_list, void* vertex_data, UINT stride, UINT element_count);
+	D3D12_INDEX_BUFFER_VIEW ibv;
 };
 

@@ -15,7 +15,7 @@ device_resources::~device_resources()
 
 void device_resources::create_device(winrt::com_ptr<IDXGIAdapter4> adapter)
 {
-	check_hresult(D3D12CreateDevice(adapter.get(), D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_1, guid_of<ID3D12Device>(), device.put_void()));
+	check_hresult(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_1, guid_of<ID3D12Device>(), device.put_void()));
 	m_rtv_increment_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
@@ -25,8 +25,8 @@ void device_resources::create_xaml_swapchain(std::shared_ptr<cmd_queue>& cmd_que
 	swapchain_desc.AlphaMode = DXGI_ALPHA_MODE::DXGI_ALPHA_MODE_IGNORE;
 	swapchain_desc.BufferCount = buffer_count;
 	swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapchain_desc.Flags = 0;
-	swapchain_desc.Format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	swapchain_desc.Format = m_back_buffer_format;
 	swapchain_desc.Width = width;
 	swapchain_desc.Height = height;
 	swapchain_desc.SampleDesc.Count = 1;
@@ -178,10 +178,82 @@ void device_resources::transition_resource(ID3D12GraphicsCommandList4* cmd_list,
 	cmd_list->ResourceBarrier(1, &barrier);
 }
 
+void device_resources::resize_rtv(UINT width, UINT height)
+{
+	for (int i = 0; i < m_swapchain_buffers.size(); ++i)
+	{
+		m_swapchain_buffers.at(i) = nullptr;
+	}
+	//DXGI ERROR: IDXGISwapChain::ResizeBuffers: 
+	//Swapchain cannot be resized unless all outstanding buffer references have been released. 
+	check_hresult(m_swapchain->ResizeBuffers(
+		buffer_count,
+		width,
+		height,
+		m_back_buffer_format,
+		DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH
+	));
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = rtv_heap->GetCPUDescriptorHandleForHeapStart();
+
+	for (int i = 0; i < m_swapchain_buffers.size(); ++i)
+	{
+		check_hresult(m_swapchain->GetBuffer(i, guid_of<ID3D12Resource>(), m_swapchain_buffers[i].put_void()));
+		device->CreateRenderTargetView(m_swapchain_buffers[i].get(), nullptr, rtv_handle);
+		rtv_handle.ptr = rtv_handle.ptr + m_rtv_increment_size;
+	}
+
+	m_dsv = nullptr;
+	create_dsv(width, height);
+}
+
 uint32_t device_resources::present()
 {
 	check_hresult(m_swapchain->Present(0, 0));
 	return m_swapchain.as<IDXGISwapChain4>()->GetCurrentBackBufferIndex();
+}
+
+void device_resources::create_default_buffer(ID3D12Device* device,
+	ID3D12GraphicsCommandList* cmd_list,
+	CD3DX12_RESOURCE_DESC* resource_desc,
+	const void* data,
+	ID3D12Resource** upload_buffer,
+	ID3D12Resource** default_buffer)
+{
+	check_hresult(device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		resource_desc,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		guid_of<ID3D12Resource>(),
+		(void**)upload_buffer));
+
+	check_hresult((*upload_buffer)->SetName(L"uploader_buffer"));
+
+	check_hresult(device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		resource_desc,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		guid_of<ID3D12Resource>(),
+		(void**)default_buffer));
+
+	check_hresult((*default_buffer)->SetName(L"vertex_default_buffer"));
+
+	D3D12_SUBRESOURCE_DATA subresource_data;
+	subresource_data.pData = data;
+	subresource_data.RowPitch = resource_desc->Width;
+	subresource_data.SlicePitch = subresource_data.RowPitch;
+
+	// upload heap to gpu default heap
+	UpdateSubresources(cmd_list, *default_buffer, *upload_buffer, 0, 0, 1, &subresource_data);
+
+	cmd_list->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+		*default_buffer,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ));
 }
 
 com_ptr<ID3DBlob> device_resources::compile_shader_from_file(hstring filename, std::string entry_point, std::string target)

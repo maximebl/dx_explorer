@@ -1,0 +1,23 @@
+namespace transformations
+{
+    [default_interface]
+    runtimeclass scalar_slider : Windows.UI.Xaml.Controls.UserControl, Windows.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        scalar_slider();
+
+		static Windows.UI.Xaml.DependencyProperty labelProperty{ get; };
+		String label;
+
+		static Windows.UI.Xaml.DependencyProperty scalar_valueProperty{ get; };
+		Single scalar_value;
+
+		static Windows.UI.Xaml.DependencyProperty scalar_minProperty{ get; };
+		Double scalar_min;
+
+		static Windows.UI.Xaml.DependencyProperty scalar_maxProperty{ get; };
+		Double scalar_max;
+
+		static Windows.UI.Xaml.DependencyProperty step_frequencyProperty{ get; };
+		Double step_frequency;
+    }
+}

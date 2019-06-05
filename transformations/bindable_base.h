@@ -7,7 +7,6 @@ namespace winrt::transformations::implementation
 	{
 		bindable_base() = default;
 
-		void RaisePropertyChanged(hstring const& propertyName);
 		winrt::event_token PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler);
 		void PropertyChanged(winrt::event_token const& token) noexcept;
 

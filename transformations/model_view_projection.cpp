@@ -12,10 +12,9 @@ namespace winrt::transformations::implementation
 		InitializeComponent();
 
 		DataContext(m_vm);
-		m_vm.Title(L"supz");
 		m_vm.current_swapchain_panel(swapchain_panel());
 
-		m_app.initialize(swapchain_panel(), 512, 512);
+		m_app.initialize(m_vm);
 		m_app.load_content();
 		m_app.run();
 	}

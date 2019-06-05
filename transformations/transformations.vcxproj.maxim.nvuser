@@ -1,0 +1,10 @@
+﻿<ProjectSettingsModel DefinitionId="a218e900-1199-4ab1-a767-7976786f04d4" DisplayName="Nexus Project User Settings" xmlns="clr-namespace:Ark.PropertyModel;assembly=Ark">
+    <SettingsPointModel DefinitionId="3eb7ba04-016d-475e-b0ff-daa5f0e59a08" DisplayName="Launch">
+        <Property Name="LaunchSettingsModifiedByUser" Value="True" />
+        <Property Name="UWPAppName" Value="App" />
+        <Property Name="UWPPackageFamilyName" Value="eed3565e-bcdb-4801-9e7c-6e2693ed0161_1mkedjvecenvy" />
+        <Property Name="UWPPackageFullName" Value="eed3565e-bcdb-4801-9e7c-6e2693ed0161_1.0.0.0_x64__1mkedjvecenvy" />
+        <Property Name="UWPPackageManifest" Value="C:\Users\maxim\source\repos\dx_explorer\x64\Debug\transformations\AppxManifest.xml" />
+        <Property Name="WindowsPlatformType" Value="Universal" />
+    </SettingsPointModel>
+</ProjectSettingsModel>

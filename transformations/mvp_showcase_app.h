@@ -6,11 +6,11 @@
 #include "frame_resource.h"
 #include "../external_libs/GeometryGenerator.h"
 #include "mesh.h"
+#include "mvp_viewmodel.h"
 
 class mvp_showcase_app
 {
 public:
-	bool test = true;
 	~mvp_showcase_app();
 
 	mvp_showcase_app(const mvp_showcase_app&) = delete;
@@ -18,7 +18,7 @@ public:
 	mvp_showcase_app(mvp_showcase_app &&) = delete;
 	mvp_showcase_app& operator=(mvp_showcase_app &&) = delete;
 
-	bool initialize(winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, uint64_t width, uint64_t height);
+	bool initialize(transformations::mvp_viewmodel& vm);
 	void load_content();
 	void run();
 
@@ -38,7 +38,6 @@ public:
 		return s_app;
 	}
 
-	//uint64_t m_fence_value = 0;
 	std::vector<std::unique_ptr<frame_resource>> m_frame_resources;
 	frame_resource* m_current_frame_resource;
 	uint32_t m_frame_resource_index = 0;
@@ -47,20 +46,32 @@ public:
 
 	struct object_constant_buffer
 	{
-		DirectX::XMMATRIX model_view_projection;
+		DirectX::XMFLOAT4X4 model_view_projection;
 	};
 
 private:
 	mvp_showcase_app();
+
+	transformations::mvp_viewmodel m_current_vm;
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissor_rect;
 	uint64_t m_output_width = 0;
 	uint64_t m_output_height = 0;
 
+	uint32_t new_width = 0;
+	uint32_t new_height = 0;
+	uint32_t old_width = 0;
+	uint32_t old_height = 0;
+
 	void compile_shaders();
 	void create_cmd_objects();
 	void create_cube();
+
+	void update_viewport();
+	void update_scissor_rect();
+	void update_mvp_matrix();
+
 	GeometryGenerator::MeshData m_cube;
 	system_info m_system_info;
 	device_resources m_device_resources;
@@ -72,10 +83,15 @@ private:
 	winrt::com_ptr<ID3D12DescriptorHeap> m_srv_cbv_uav_heap = nullptr;
 	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource = nullptr;
 	winrt::com_ptr<ID3D12PipelineState> m_pso = nullptr;
-	std::byte* m_mvp_data;
 	HANDLE m_render_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
 
 	mesh m_cube_mesh;
+
+	std::byte* m_mvp_data;
+	DirectX::XMFLOAT4X4 m_stored_mvp;
+    DirectX::XMMATRIX m_model;
+    DirectX::XMMATRIX m_view;
+    DirectX::XMMATRIX m_projection;
 };
 
