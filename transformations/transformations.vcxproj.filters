@@ -10,6 +10,7 @@
     <Page Include="scalar_slider.xaml">
       <Filter>views</Filter>
     </Page>
+    <Page Include="$(MSBuildThisFileDirectory)DensityStyles\Compact.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -20,6 +21,19 @@
     </Midl>
     <Midl Include="bindable_base.idl">
       <Filter>view_models</Filter>
+    </Midl>
+    <Midl Include="scalar_slider.idl" />
+    <Midl Include="enum_to_bool.idl">
+      <Filter>views\converters</Filter>
+    </Midl>
+    <Midl Include="xaml_helpers.idl">
+      <Filter>utilities</Filter>
+    </Midl>
+    <Midl Include="float_to_double.idl">
+      <Filter>views\converters</Filter>
+    </Midl>
+    <Midl Include="not_zero.idl">
+      <Filter>views\converters</Filter>
     </Midl>
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +73,11 @@
       <Filter>graphics</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="scalar_slider.cpp" />
+    <ClCompile Include="enum_to_bool.cpp" />
+    <ClCompile Include="math_helpers.cpp">
+      <Filter>utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -97,6 +116,11 @@
     </ClInclude>
     <ClInclude Include="mesh.h">
       <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="scalar_slider.h" />
+    <ClInclude Include="enum_to_bool.h" />
+    <ClInclude Include="math_helpers.h">
+      <Filter>utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +180,9 @@
     </Filter>
     <Filter Include="external_libs">
       <UniqueIdentifier>{ac595f2f-7672-4ee9-bfca-7c842e00e7ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="views\converters">
+      <UniqueIdentifier>{aaceb648-422b-4a42-bee0-9ddb0af1ea09}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

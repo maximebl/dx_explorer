@@ -172,14 +172,64 @@ namespace winrt::transformations::implementation
 		update_value(L"far_z", m_far_z, value);
 	}
 
-	void mvp_viewmodel::options_visible(bool value)
+	void mvp_viewmodel::viewport_options_visible(bool value)
 	{
-		update_value(L"options_visible", m_options_visible, value);
+		update_value(L"viewport_options_visible", m_viewport_options_visible, value);
 	}
 
-	bool mvp_viewmodel::options_visible()
+	bool mvp_viewmodel::viewport_options_visible()
 	{
-		return m_options_visible;
+		return m_viewport_options_visible;
+	}
+
+	void mvp_viewmodel::model_matrix_options_visible(bool value)
+	{
+		update_value(L"model_matrix_options_visible", m_model_matrix_options_visible, value);
+	}
+
+	bool mvp_viewmodel::model_matrix_options_visible()
+	{
+		return m_model_matrix_options_visible;
+	}
+
+	void mvp_viewmodel::view_matrix_options_visible(bool value)
+	{
+		update_value(L"view_matrix_options_visible", m_view_matrix_options_visible, value);
+	}
+
+	bool mvp_viewmodel::view_matrix_options_visible()
+	{
+		return m_view_matrix_options_visible;
+	}
+
+	void mvp_viewmodel::projection_matrix_options_visible(bool value)
+	{
+		update_value(L"projection_matrix_options_visible", m_projection_matrix_options_visible, value);
+	}
+
+	bool mvp_viewmodel::projection_matrix_options_visible()
+	{
+		return m_projection_matrix_options_visible;
+	}
+
+	transformations::vector_selection mvp_viewmodel::up_direction()
+	{
+		return m_up_direction;
+	}
+
+	void mvp_viewmodel::up_direction(transformations::vector_selection value)
+	{
+		update_value(L"up_direction", m_up_direction, value);
+	}
+
+	transformations::vector_selection mvp_viewmodel::focus_point()
+	{
+		return m_focus_point;
+	}
+
+	void mvp_viewmodel::focus_point(transformations::vector_selection value)
+	{
+		update_value(L"focus_point", m_focus_point, value);
 	}
 
 	IAsyncAction mvp_viewmodel::initialize()

@@ -2,6 +2,15 @@ import "bindable_base.idl";
 
 namespace transformations
 {
+	enum vector_selection
+	{
+		x = 0,
+		y = 1,
+		z = 2,
+		w = 3
+	};
+
+	[bindable]
 	unsealed runtimeclass mvp_viewmodel : bindable_base
 	{
 		mvp_viewmodel();
@@ -9,25 +18,30 @@ namespace transformations
 		Windows.UI.Xaml.Input.XamlUICommand initialize_app{ get; };
 		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
 
-		Boolean options_visible;
+		Boolean model_matrix_options_visible;
+		Boolean view_matrix_options_visible;
+		Boolean projection_matrix_options_visible;
+		Boolean viewport_options_visible;
 
 		Single eye_position_x;
 		Single eye_position_y;
 		Single eye_position_z;
+		vector_selection up_direction;
+		vector_selection focus_point;
 
 		Single angle;
 		Single rotation_axis_x;
 		Single rotation_axis_y;
 		Single rotation_axis_z;
 
-		Single viewport_width;
-		Single viewport_height;
-
-		Single scissor_rect_width;
-		Single scissor_rect_height;
-
 		Single field_of_view;
 		Single near_z;
 		Single far_z;
+
+		Single viewport_width;
+		Single viewport_height;
+		Single scissor_rect_width;
+		Single scissor_rect_height;
+
 	}
 }

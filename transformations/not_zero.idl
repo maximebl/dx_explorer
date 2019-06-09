@@ -1,0 +1,9 @@
+namespace transformations
+{
+    [bindable]
+    [default_interface]
+    runtimeclass not_zero : Windows.UI.Xaml.Data.IValueConverter 
+    {
+        not_zero();
+    }
+}

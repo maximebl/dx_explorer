@@ -114,7 +114,16 @@
     <ClInclude Include="cmd_queue.h" />
     <ClInclude Include="debug_tools.h" />
     <ClInclude Include="device_resources.h" />
+    <ClInclude Include="enum_to_bool.h">
+      <DependentUpon>enum_to_bool.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="float_to_double.h">
+      <DependentUpon>float_to_double.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="frame_resource.h" />
+    <ClInclude Include="math_helpers.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model_view_projection.h">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
@@ -123,6 +132,10 @@
     <ClInclude Include="mvp_showcase_app.h" />
     <ClInclude Include="mvp_viewmodel.h">
       <DependentUpon>mvp_viewmodel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="not_zero.h">
+      <DependentUpon>not_zero.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="pch.h" />
@@ -139,6 +152,10 @@
     <ClInclude Include="system_info.h" />
     <ClInclude Include="ui_helpers.h" />
     <ClInclude Include="upload_buffer.h" />
+    <ClInclude Include="xaml_helpers.h">
+      <DependentUpon>xaml_helpers.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -182,8 +199,17 @@
     <ClCompile Include="cmd_queue.cpp" />
     <ClCompile Include="debug_tools.cpp" />
     <ClCompile Include="device_resources.cpp" />
+    <ClCompile Include="enum_to_bool.cpp">
+      <DependentUpon>enum_to_bool.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="float_to_double.cpp">
+      <DependentUpon>float_to_double.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="frame_resource.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="math_helpers.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="model_view_projection.cpp">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
@@ -192,6 +218,10 @@
     <ClCompile Include="mvp_showcase_app.cpp" />
     <ClCompile Include="mvp_viewmodel.cpp">
       <DependentUpon>mvp_viewmodel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="not_zero.cpp">
+      <DependentUpon>not_zero.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -213,12 +243,22 @@
     <ClCompile Include="upload_buffer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="xaml_helpers.cpp">
+      <DependentUpon>xaml_helpers.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
     </Midl>
     <Midl Include="bindable_base.idl">
+      <SubType>Designer</SubType>
+    </Midl>
+    <Midl Include="enum_to_bool.idl">
+      <SubType>Designer</SubType>
+    </Midl>
+    <Midl Include="float_to_double.idl">
       <SubType>Designer</SubType>
     </Midl>
     <Midl Include="MainPage.idl">
@@ -231,9 +271,15 @@
     <Midl Include="mvp_viewmodel.idl">
       <SubType>Designer</SubType>
     </Midl>
+    <Midl Include="not_zero.idl">
+      <SubType>Designer</SubType>
+    </Midl>
     <Midl Include="scalar_slider.idl">
       <DependentUpon>scalar_slider.xaml</DependentUpon>
       <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="xaml_helpers.idl">
+      <SubType>Designer</SubType>
     </Midl>
   </ItemGroup>
   <ItemGroup>

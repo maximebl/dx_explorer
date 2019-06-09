@@ -1,0 +1,12 @@
+import "bindable_base.idl";
+
+namespace transformations
+{
+    [default_interface]
+    runtimeclass xaml_helpers 
+    {
+        xaml_helpers();
+		static Double not_zero(Single input_value);
+		static Single not_zero_bindback(Double input_value);
+    }
+}

@@ -56,13 +56,13 @@ private:
 
 	D3D12_VIEWPORT m_viewport;
 	D3D12_RECT m_scissor_rect;
-	uint64_t m_output_width = 0;
-	uint64_t m_output_height = 0;
+	float m_output_width = 0;
+	float m_output_height = 0;
 
-	uint32_t new_width = 0;
-	uint32_t new_height = 0;
-	uint32_t old_width = 0;
-	uint32_t old_height = 0;
+	float new_width = 0;
+	float new_height = 0;
+	float old_width = 0;
+	float old_height = 0;
 
 	void compile_shaders();
 	void create_cmd_objects();

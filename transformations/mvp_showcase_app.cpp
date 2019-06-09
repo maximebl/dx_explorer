@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "mvp_showcase_app.h"
+#include "math_helpers.h"
 
 using namespace winrt;
 using namespace winrt::Windows::Foundation;
@@ -58,8 +59,12 @@ bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 	update_viewport();
 	update_scissor_rect();
 
-	m_output_width = m_current_vm.viewport_width();
-	m_output_height = m_current_vm.viewport_height();
+	m_output_width = m_current_vm.current_swapchain_panel().ActualWidth();
+	m_output_height = m_current_vm.current_swapchain_panel().ActualHeight();
+	m_current_vm.viewport_width(m_output_width);
+	m_current_vm.viewport_height(m_output_height);
+	m_current_vm.scissor_rect_width(m_output_width);
+	m_current_vm.scissor_rect_height(m_output_height);
 
 	com_ptr<IDXGIAdapter4> adapter = m_system_info.get_high_performance_adapter();
 
@@ -69,7 +74,7 @@ bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 		build_frame_resources();
 		create_cmd_objects();
 		m_device_resources.create_dsv_heap();
-		m_device_resources.create_dsv(m_output_width, static_cast<UINT>(m_output_height));
+		m_device_resources.create_dsv(static_cast<UINT64>(m_output_width), static_cast<UINT>(m_output_height));
 		m_device_resources.create_xaml_swapchain(m_cmd_queue, m_current_vm.current_swapchain_panel(), m_system_info.dxgi_factory, static_cast<UINT>(m_output_width), static_cast<UINT>(m_output_height));
 		m_device_resources.create_rtv_heap();
 		m_device_resources.create_rtv();
@@ -109,7 +114,9 @@ void mvp_showcase_app::update()
 	new_width = m_current_vm.viewport_width();
 	new_height = m_current_vm.viewport_height();
 
-	if (new_width != old_width || new_height != old_height)
+	bool is_dimension_changed = (new_width != old_width || new_height != old_height);
+
+	if (is_dimension_changed && new_width > 0 && new_height > 0)
 	{
 		update_viewport();
 
@@ -329,17 +336,60 @@ void mvp_showcase_app::update_scissor_rect()
 void mvp_showcase_app::update_mvp_matrix()
 {
 	// model matrix
+#if defined(DEBUG) || defined(_DEBUG)  
+	bool axis_x = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_x());
+	bool axis_y = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_y());
+	bool axis_z = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_z());
+	bool is_all_zeros = axis_x && axis_y && axis_z;
+	_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
+#endif
+
 	const XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
 	m_model = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
 
 	// view matrix
 	XMVECTOR eye_position = XMVectorSet(m_current_vm.eye_position_x(), m_current_vm.eye_position_y(), m_current_vm.eye_position_z(), 1);
-	XMVECTOR focus_point = XMVectorSet(0, 0, 0, 1);
-	XMVECTOR up_direction = XMVectorSet(0, 1, 0, 0);
+	XMVECTOR focus_point;
+	switch (m_current_vm.focus_point())
+	{
+	case transformations::vector_selection::x:
+		focus_point = XMVectorSet(1, 0, 0, 0);
+		break;
+	case transformations::vector_selection::y:
+		focus_point = XMVectorSet(0, 1, 0, 0);
+		break;
+	case transformations::vector_selection::z:
+		focus_point = XMVectorSet(0, 0, 1, 0);
+		break;
+	case transformations::vector_selection::w:
+		focus_point = XMVectorSet(0, 0, 0, 1);
+		break;
+	default:
+		focus_point = XMVectorSet(0, 0, 0, 1);
+		break;
+	}
+
+	XMVECTOR up_direction;
+	switch (m_current_vm.up_direction())
+	{
+	case transformations::vector_selection::x:
+		up_direction = XMVectorSet(1, 0, 0, 0);
+		break;
+	case transformations::vector_selection::y:
+		up_direction = XMVectorSet(0, 1, 0, 0);
+		break;
+	case transformations::vector_selection::z:
+		up_direction = XMVectorSet(0, 0, 1, 0);
+		break;
+	default:
+		up_direction = XMVectorSet(0, 1, 0, 0);
+		break;
+	}
+
 	m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
 
 	// projection matrix
-	float aspect_ratio = m_output_width / static_cast<float>(m_output_height);
+	float aspect_ratio = m_current_vm.viewport_width() / m_current_vm.viewport_height();
 	m_projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_current_vm.field_of_view()), aspect_ratio, m_current_vm.near_z(), m_current_vm.far_z());
 
 	// mvp matrix
@@ -520,28 +570,30 @@ void mvp_showcase_app::create_cube()
 	size_t element_count = _countof(g_Vertices);
 	size_t buffer_byte_size = buffer_byte_stride * element_count;
 
+	auto vertices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 	m_device_resources.create_default_buffer(
 		m_device_resources.device.get(), m_graphics_cmdlist.get(),
-		&CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size), g_Vertices,
+		&vertices_buffer, g_Vertices,
 		m_cube_mesh.vertex_uploader.put(), m_cube_mesh.vertex_default.put());
 
 	m_cube_mesh.vbv.BufferLocation = m_cube_mesh.vertex_default->GetGPUVirtualAddress();
-	m_cube_mesh.vbv.SizeInBytes = buffer_byte_size;
-	m_cube_mesh.vbv.StrideInBytes = buffer_byte_stride;
-	m_cube_mesh.vertex_count = element_count;
+	m_cube_mesh.vbv.SizeInBytes = static_cast<UINT>(buffer_byte_size);
+	m_cube_mesh.vbv.StrideInBytes = static_cast<UINT>(buffer_byte_stride);
+	m_cube_mesh.vertex_count = static_cast<UINT>(element_count);
 
 	// index data
 	element_count = _countof(g_Indicies);
 	buffer_byte_stride = sizeof(WORD);
 	buffer_byte_size = buffer_byte_stride * element_count;
 
+	auto indices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 	m_device_resources.create_default_buffer(
 		m_device_resources.device.get(), m_graphics_cmdlist.get(),
-		&CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size), g_Indicies,
+		&indices_buffer, g_Indicies,
 		m_cube_mesh.index_uploader.put(), m_cube_mesh.index_default.put());
 
-	m_cube_mesh.index_count = element_count;
+	m_cube_mesh.index_count = static_cast<UINT>(element_count);
 	m_cube_mesh.ibv.BufferLocation = m_cube_mesh.index_default->GetGPUVirtualAddress();
 	m_cube_mesh.ibv.Format = DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
-	m_cube_mesh.ibv.SizeInBytes = buffer_byte_size;
+	m_cube_mesh.ibv.SizeInBytes = static_cast<UINT>(buffer_byte_size);
 }

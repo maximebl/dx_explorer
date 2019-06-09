@@ -19,6 +19,10 @@ namespace winrt::transformations::implementation
 		void eye_position_y(float value);
 		float eye_position_z();
 		void eye_position_z(float value);
+		transformations::vector_selection up_direction();
+        void up_direction(transformations::vector_selection value);
+		transformations::vector_selection focus_point();
+		void focus_point(transformations::vector_selection value);
 
 		float angle();
 		void angle(float value);
@@ -46,8 +50,14 @@ namespace winrt::transformations::implementation
 		float far_z();
 		void far_z(float value);
 
-		void options_visible(bool value);
-		bool options_visible();
+		void viewport_options_visible(bool value);
+		bool viewport_options_visible();
+		void model_matrix_options_visible(bool value);
+		bool model_matrix_options_visible();
+		void view_matrix_options_visible(bool value);
+		bool view_matrix_options_visible();
+		void projection_matrix_options_visible(bool value);
+		bool projection_matrix_options_visible();
 
 	private:
 		hstring m_title;
@@ -58,6 +68,7 @@ namespace winrt::transformations::implementation
 		float m_eye_position_x = 0.f;
 		float m_eye_position_y = 0.f;
 		float m_eye_position_z = -10.f;
+		transformations::vector_selection m_focus_point = transformations::vector_selection::w;
 
 		float m_angle = 0.0f;
 		float m_rotation_axis_x = 0.0f;
@@ -73,7 +84,12 @@ namespace winrt::transformations::implementation
 		float m_field_of_view = 45.f;
 		float m_near_z = 0.1f;
 		float m_far_z = 100.f;
-		bool m_options_visible = false;
+		bool m_model_matrix_options_visible = true;
+		bool m_view_matrix_options_visible = true;
+		bool m_projection_matrix_options_visible = true;
+		bool m_viewport_options_visible = true;
+
+		transformations::vector_selection m_up_direction = transformations::vector_selection::y;
 	};
 }
 namespace winrt::transformations::factory_implementation

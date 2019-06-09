@@ -1,0 +1,8 @@
+namespace transformations
+{
+    [default_interface]
+    runtimeclass float_to_double : Windows.UI.Xaml.Data.IValueConverter 
+    {
+        float_to_double();
+    }
+}

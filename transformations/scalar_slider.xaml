@@ -11,11 +11,12 @@
         <TextBlock x:Name="scalar_label" Text="{x:Bind label}" 
                    RelativePanel.Above="scalar_slider" FontSize="12"/>
 
-        <TextBox x:Name="scalar_text" Text="{x:Bind scalar_value, Mode=TwoWay}" 
+        <TextBox x:Name="scalar_text" Text="{x:Bind scalar_value, Mode=TwoWay}"
              RelativePanel.AlignRightWithPanel="True" FontSize="12"/>
-
+    
         <Slider x:Name="scalar_slider" Orientation="Horizontal" StepFrequency="{x:Bind step_frequency}"
-                Value="{x:Bind scalar_value, Mode=TwoWay}" Minimum="{x:Bind scalar_min}" Maximum="{x:Bind scalar_max}" TickPlacement="None" 
+                Value="{x:Bind scalar_value, Mode=TwoWay}" 
+                Minimum="{x:Bind scalar_min}" Maximum="{x:Bind scalar_max}" TickPlacement="None" IsTabStop="False"
                 RelativePanel.Below="scalar_text"
                 RelativePanel.AlignLeftWithPanel="True"
                 RelativePanel.AlignRightWithPanel="True" />
