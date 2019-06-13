@@ -6,6 +6,7 @@
 #include "enum_to_bool.h"
 #include "xaml_helpers.h"
 #include "not_zero.h"
+#include "fold_panel.h"
 
 namespace winrt::transformations::implementation
 {
@@ -20,8 +21,8 @@ namespace winrt::transformations::implementation
 		winrt::Windows::Foundation::IAsyncAction page_size_changed(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
 
 	private:
-		transformations::mvp_viewmodel m_vm = winrt::make<transformations::implementation::mvp_viewmodel>();
-		mvp_showcase_app& m_app = mvp_showcase_app::get_instance();
+		mvp_showcase_app m_app;
+		transformations::mvp_viewmodel m_vm = winrt::make<transformations::implementation::mvp_viewmodel>(&m_app);
 	};
 }
 

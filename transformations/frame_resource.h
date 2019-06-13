@@ -8,5 +8,6 @@ public:
 
 	uint64_t fence_value = 0;
 	winrt::com_ptr<ID3D12CommandAllocator> cmd_allocator;
+	winrt::com_ptr<ID3D12CommandAllocator> ui_requests_cmd_allocator;
 };
 

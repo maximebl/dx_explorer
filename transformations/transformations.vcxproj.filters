@@ -11,6 +11,10 @@
       <Filter>views</Filter>
     </Page>
     <Page Include="$(MSBuildThisFileDirectory)DensityStyles\Compact.xaml" />
+    <Page Include="Themes\Generic.xaml" />
+    <Page Include="fold_control.xaml">
+      <Filter>views</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />
@@ -35,6 +39,10 @@
     <Midl Include="not_zero.idl">
       <Filter>views\converters</Filter>
     </Midl>
+    <Midl Include="fold_panel.idl">
+      <Filter>views</Filter>
+    </Midl>
+    <Midl Include="fold_control.idl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -78,6 +86,12 @@
     <ClCompile Include="math_helpers.cpp">
       <Filter>utilities</Filter>
     </ClCompile>
+    <ClCompile Include="float_to_double.cpp" />
+    <ClCompile Include="fold_panel.cpp" />
+    <ClCompile Include="not_zero.cpp" />
+    <ClCompile Include="xaml_helpers.cpp" />
+    <ClCompile Include="fold_control.cpp" />
+    <ClCompile Include="render_item.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -122,6 +136,12 @@
     <ClInclude Include="math_helpers.h">
       <Filter>utilities</Filter>
     </ClInclude>
+    <ClInclude Include="float_to_double.h" />
+    <ClInclude Include="fold_panel.h" />
+    <ClInclude Include="not_zero.h" />
+    <ClInclude Include="xaml_helpers.h" />
+    <ClInclude Include="fold_control.h" />
+    <ClInclude Include="render_item.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">

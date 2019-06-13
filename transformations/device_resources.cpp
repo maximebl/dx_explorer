@@ -218,7 +218,8 @@ void device_resources::create_default_buffer(ID3D12Device* device,
 	CD3DX12_RESOURCE_DESC* resource_desc,
 	const void* data,
 	ID3D12Resource** upload_buffer,
-	ID3D12Resource** default_buffer)
+	ID3D12Resource** default_buffer,
+	hstring buffer_name)
 {
 	check_hresult(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD),
@@ -229,8 +230,6 @@ void device_resources::create_default_buffer(ID3D12Device* device,
 		guid_of<ID3D12Resource>(),
 		(void**)upload_buffer));
 
-	check_hresult((*upload_buffer)->SetName(L"uploader_buffer"));
-
 	check_hresult(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
@@ -240,7 +239,7 @@ void device_resources::create_default_buffer(ID3D12Device* device,
 		guid_of<ID3D12Resource>(),
 		(void**)default_buffer));
 
-	check_hresult((*default_buffer)->SetName(L"vertex_default_buffer"));
+	check_hresult((*default_buffer)->SetName(buffer_name.c_str()));
 
 	D3D12_SUBRESOURCE_DATA subresource_data;
 	subresource_data.pData = data;

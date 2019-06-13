@@ -16,6 +16,8 @@ namespace transformations
 		mvp_viewmodel();
 
 		Windows.UI.Xaml.Input.XamlUICommand initialize_app{ get; };
+		Windows.UI.Xaml.Input.XamlUICommand cmd_add_lit_cube{ get; };
+		Windows.UI.Xaml.Input.XamlUICommand cmd_add_simple_cube{ get; };
 		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
 
 		Boolean model_matrix_options_visible;

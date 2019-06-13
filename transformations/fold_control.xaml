@@ -1,0 +1,42 @@
+﻿<UserControl
+    x:Class="transformations.fold_control"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:transformations"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <StackPanel Orientation="Vertical" Padding="0,0,0,10">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+
+                <VisualState x:Name="hide_panel">
+                    <VisualState.Setters>
+                        <Setter Target="content_control.Visibility" Value="Collapsed" />
+                        <Setter Target="content_control.Opacity" Value="0" />
+                    </VisualState.Setters>
+                </VisualState>
+
+                <VisualState x:Name="show_panel">
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="content_control" Storyboard.TargetProperty="Opacity" From="0" To="1">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase/>
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <RelativePanel>
+            <TextBlock x:Name="model_label" FontWeight="ExtraBlack" Text="{x:Bind label, Mode=OneWay}"/>
+            <Button Click="visibility_toggle_click" Background="Transparent" VerticalAlignment="Top" HorizontalAlignment="Right" Height="20" BorderBrush="Transparent" BorderThickness="0"
+                    RelativePanel.RightOf="model_label" RelativePanel.AlignRightWithPanel="True">
+                <SymbolIcon Symbol="More"/>
+            </Button>
+        </RelativePanel>
+        <ContentControl IsTabStop="False" x:Name="content_control" HorizontalContentAlignment="Stretch" Content="{x:Bind inner_content, Mode=OneWay}"/>
+    </StackPanel>
+</UserControl>

@@ -2,17 +2,32 @@
 #include "mvp_viewmodel.h"
 #include "mvp_viewmodel.g.cpp"
 #include "ui_helpers.h"
+#include "mvp_showcase_app.h"
 
 using namespace winrt::Windows::UI::Xaml::Input;
 using namespace winrt::Windows::Foundation;
 
 namespace winrt::transformations::implementation
 {
-	mvp_viewmodel::mvp_viewmodel()
+	mvp_viewmodel::mvp_viewmodel(mvp_showcase_app* app)
 	{
+		m_app.reset(app);
+
 		m_initialize_app.ExecuteRequested(
 			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
 			initialize();
+			co_return;
+		});
+
+		m_cmd_add_lit_cube.ExecuteRequested(
+			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
+			add_lit_cube();
+			co_return;
+		});
+
+		m_cmd_add_simple_cube.ExecuteRequested(
+			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
+			add_simple_cube();
 			co_return;
 		});
 	}
@@ -20,6 +35,16 @@ namespace winrt::transformations::implementation
 	XamlUICommand mvp_viewmodel::initialize_app()
 	{
 		return m_initialize_app;
+	}
+
+	Windows::UI::Xaml::Input::XamlUICommand mvp_viewmodel::cmd_add_lit_cube()
+	{
+		return m_cmd_add_lit_cube;
+	}
+
+	Windows::UI::Xaml::Input::XamlUICommand mvp_viewmodel::cmd_add_simple_cube()
+	{
+		return m_cmd_add_simple_cube;
 	}
 
 	Windows::UI::Xaml::Controls::SwapChainPanel mvp_viewmodel::current_swapchain_panel()
@@ -232,15 +257,25 @@ namespace winrt::transformations::implementation
 		update_value(L"focus_point", m_focus_point, value);
 	}
 
+	IAsyncAction mvp_viewmodel::add_lit_cube()
+	{
+		m_app->create_lighting_cube();
+		co_return;
+	}
+
+	IAsyncAction mvp_viewmodel::add_simple_cube()
+	{
+		co_await winrt::resume_background();
+		m_app->create_cube();
+		co_return;
+	}
+
 	IAsyncAction mvp_viewmodel::initialize()
 	{
-		//if (!app.initialize(m_current_swapchain_panel, 512, 512))
-		//{
-		//	co_await ui_helpers::show_error_dialog(L"Failed to verify DirectX Math library support.", L"CPU not supported");
-		//	co_return;
-		//}
-		//app.load_content();
-		//co_await app.run();
+		transformations::mvp_viewmodel new_vm = *this;
+		m_app->initialize(new_vm);
+		m_app->load_content();
+		m_app->run();
 		co_return;
 	}
 }

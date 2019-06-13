@@ -31,15 +31,25 @@ void mvp_showcase_app::create_cmd_objects()
 {
 	m_cmd_queue = std::make_shared<cmd_queue>(m_device_resources.device);
 
-	check_hresult(
-		m_device_resources.device->CreateCommandList(
-			0,
-			D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
-			m_frame_resources[m_frame_resource_index]->cmd_allocator.get(),
-			nullptr,
-			guid_of<ID3D12GraphicsCommandList>(),
-			m_graphics_cmdlist.put_void())
-	);
+	check_hresult(m_device_resources.device->CreateCommandList(
+		0,
+		D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
+		m_frame_resources[m_frame_resource_index]->cmd_allocator.get(),
+		nullptr,
+		guid_of<ID3D12GraphicsCommandList>(),
+		m_graphics_cmdlist.put_void()));
+
+	check_hresult(m_graphics_cmdlist->SetName(L"graphics_cmdlist"));
+
+	check_hresult(m_device_resources.device->CreateCommandList(
+		0,
+		D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
+		m_frame_resources[m_frame_resource_index]->ui_requests_cmd_allocator.get(),
+		nullptr,
+		guid_of<ID3D12GraphicsCommandList>(),
+		m_ui_requests_cmdlist.put_void()));
+
+	check_hresult(m_ui_requests_cmdlist->SetName(L"ui_requests_cmdlist"));
 }
 
 bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
@@ -90,12 +100,27 @@ void mvp_showcase_app::load_content()
 	compile_shaders();
 	create_mvp_cbv();
 	create_pso();
-	create_cube();
+	create_simple_cube(m_graphics_cmdlist.get());
 	m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
 	m_cmd_queue->flush_cmd_queue();
 }
 
-DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
+void mvp_showcase_app::run()
+{
+	m_render_thread_handle = CreateThread(nullptr, 0, &mvp_showcase_app::render_loop, (void*)this, 0, nullptr);
+}
+
+void mvp_showcase_app::create_cmd_record_thread()
+{
+	m_cmd_recording_thread_handle = CreateThread(nullptr, 0, &mvp_showcase_app::record_cmd_lists, (void*)this, 0, nullptr);
+}
+
+DWORD __stdcall mvp_showcase_app::record_cmd_lists(void * instance)
+{
+	return 0;
+}
+
+DWORD __stdcall mvp_showcase_app::render_loop(void* instance)
 {
 	mvp_showcase_app* app = reinterpret_cast<mvp_showcase_app*>(instance);
 
@@ -139,6 +164,7 @@ void mvp_showcase_app::render()
 	check_hresult(m_current_frame_resource->cmd_allocator->Reset());
 	check_hresult(m_graphics_cmdlist->Reset(m_current_frame_resource->cmd_allocator.get(), nullptr));
 
+
 	//D3D12 WARNING: ID3D12CommandList::DrawInstanced: Viewport: 0 is non-empty while the corresponding scissor rectangle is empty.  
 	//Nothing will be written to the render target when this viewport is selected.  In D3D12, scissor testing is always enabled. [ EXECUTION WARNING #695: DRAW_EMPTY_SCISSOR_RECTANGLE]
 	m_graphics_cmdlist->RSSetScissorRects(1, &m_scissor_rect);
@@ -159,31 +185,26 @@ void mvp_showcase_app::render()
 	std::array<ID3D12DescriptorHeap*, 2> descriptor_heaps = { m_srv_cbv_uav_heap.get(), m_device_resources.sampler_heap.get() };
 	m_graphics_cmdlist->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
-	// draw the cube 
 	m_graphics_cmdlist->SetPipelineState(m_pso.get());
-	m_graphics_cmdlist->IASetVertexBuffers(0, 1, &m_cube_mesh.vbv);
-	m_graphics_cmdlist->IASetIndexBuffer(&m_cube_mesh.ibv);
-	m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//m_graphics_cmdlist->SetGraphicsRootConstantBufferView(0, m_cbv_uploaded_resource->GetGPUVirtualAddress());
-	m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
-	m_graphics_cmdlist->DrawIndexedInstanced(m_cube_mesh.index_count, 1, 0, 0, 0);
+
+	// draw the cubes
+	draw_render_items();
 
 	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
 
-	m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
+	//m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
+	m_graphics_cmdlist->Close();
+	std::array<ID3D12CommandList*, 1> cmd_lists = { m_graphics_cmdlist.get()};
+	m_cmd_queue->get_cmd_queue()->ExecuteCommandLists((UINT)cmd_lists.size(), &cmd_lists[0]);
+
 	m_current_backbuffer_index = m_device_resources.present();
 
 	// next frame
 	m_current_frame_resource->fence_value = m_cmd_queue->signal_here();
 	m_cmd_queue->wait_for_fence_value(m_current_frame_resource->fence_value);
 	m_frame_resource_index = (m_frame_resource_index + 1) % frame_count;
-}
-
-void mvp_showcase_app::run()
-{
-	m_render_thread_handle = CreateThread(nullptr, 0, &mvp_showcase_app::record_cmd_lists, (void*)this, 0, nullptr);
 }
 
 void mvp_showcase_app::build_frame_resources()
@@ -313,6 +334,18 @@ void mvp_showcase_app::create_pso()
 	//pso_desc.StreamOutput
 	//pso_desc.CachedPSO
 	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&pso_desc, guid_of<ID3D12PipelineState>(), m_pso.put_void()));
+}
+
+void mvp_showcase_app::draw_render_items()
+{
+	for (int i = 0; i < render_items.size(); ++i)
+	{
+		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &render_items[i].mesh_geometry.vbv);
+		m_graphics_cmdlist->IASetIndexBuffer(&render_items[i].mesh_geometry.ibv);
+		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
+		m_graphics_cmdlist->DrawIndexedInstanced(render_items[i].mesh_geometry.index_count, 1, 0, 0, 0);
+	}
 }
 
 void mvp_showcase_app::update_viewport()
@@ -533,11 +566,8 @@ void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
 	check_hresult(m_device_resources.device->CreateDescriptorHeap(&srv_cbv_uav_heap_desc, guid_of<ID3D12DescriptorHeap>(), m_srv_cbv_uav_heap.put_void()));
 }
 
-void mvp_showcase_app::create_cube()
+void mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
 {
-	//GeometryGenerator geo_gen;
-	//m_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
-
 	struct VertexPosColor
 	{
 		XMFLOAT3 Position;
@@ -555,6 +585,25 @@ void mvp_showcase_app::create_cube()
 		{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
 	};
 
+	// vertex data
+	size_t buffer_byte_stride = sizeof(VertexPosColor);
+	size_t element_count = _countof(g_Vertices);
+	size_t buffer_byte_size = buffer_byte_stride * element_count;
+
+	mesh m_cube_mesh;
+
+	auto vertices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
+	m_device_resources.create_default_buffer(
+		m_device_resources.device.get(), cmd_list,
+		&vertices_buffer, g_Vertices,
+		m_cube_mesh.vertex_uploader.put(), m_cube_mesh.vertex_default.put(), L"vertex_buffer");
+
+	m_cube_mesh.vbv.BufferLocation = m_cube_mesh.vertex_default->GetGPUVirtualAddress();
+	m_cube_mesh.vbv.SizeInBytes = static_cast<UINT>(buffer_byte_size);
+	m_cube_mesh.vbv.StrideInBytes = static_cast<UINT>(buffer_byte_stride);
+	m_cube_mesh.vertex_count = static_cast<UINT>(element_count);
+
+	// index data
 	static WORD g_Indicies[36] =
 	{
 		0, 1, 2, 0, 2, 3,
@@ -565,35 +614,69 @@ void mvp_showcase_app::create_cube()
 		4, 0, 3, 4, 3, 7
 	};
 
-	// vertex data
-	size_t buffer_byte_stride = sizeof(VertexPosColor);
-	size_t element_count = _countof(g_Vertices);
-	size_t buffer_byte_size = buffer_byte_stride * element_count;
-
-	auto vertices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
-	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), m_graphics_cmdlist.get(),
-		&vertices_buffer, g_Vertices,
-		m_cube_mesh.vertex_uploader.put(), m_cube_mesh.vertex_default.put());
-
-	m_cube_mesh.vbv.BufferLocation = m_cube_mesh.vertex_default->GetGPUVirtualAddress();
-	m_cube_mesh.vbv.SizeInBytes = static_cast<UINT>(buffer_byte_size);
-	m_cube_mesh.vbv.StrideInBytes = static_cast<UINT>(buffer_byte_stride);
-	m_cube_mesh.vertex_count = static_cast<UINT>(element_count);
-
-	// index data
 	element_count = _countof(g_Indicies);
 	buffer_byte_stride = sizeof(WORD);
 	buffer_byte_size = buffer_byte_stride * element_count;
 
 	auto indices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), m_graphics_cmdlist.get(),
+		m_device_resources.device.get(), cmd_list,
 		&indices_buffer, g_Indicies,
-		m_cube_mesh.index_uploader.put(), m_cube_mesh.index_default.put());
+		m_cube_mesh.index_uploader.put(), m_cube_mesh.index_default.put(), L"index_buffer");
 
 	m_cube_mesh.index_count = static_cast<UINT>(element_count);
 	m_cube_mesh.ibv.BufferLocation = m_cube_mesh.index_default->GetGPUVirtualAddress();
 	m_cube_mesh.ibv.Format = DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
 	m_cube_mesh.ibv.SizeInBytes = static_cast<UINT>(buffer_byte_size);
+
+	render_item cube_render_item;
+	cube_render_item.mesh_geometry = m_cube_mesh;
+	render_items.push_back(cube_render_item);
+}
+
+void mvp_showcase_app::create_cube()
+{
+	create_simple_cube(m_ui_requests_cmdlist.get());
+
+	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);
+
+	check_hresult(m_current_frame_resource->ui_requests_cmd_allocator->Reset());
+	check_hresult(m_ui_requests_cmdlist->Reset(m_current_frame_resource->ui_requests_cmd_allocator.get(), nullptr));
+}
+
+void mvp_showcase_app::create_lighting_cube()
+{
+	GeometryGenerator geo_gen;
+	GeometryGenerator::MeshData lighting_cube = geo_gen.CreateBox(1.5f, 1.f, 1.5f, 3);
+
+	// create the vertex buffer
+	size_t buffer_byte_stride = sizeof(GeometryGenerator::Vertex);
+	size_t buffer_byte_size = buffer_byte_stride * lighting_cube.Vertices.size();
+
+	auto vertices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
+
+	mesh m_lighting_cube_mesh;
+	m_device_resources.create_default_buffer(
+		m_device_resources.device.get(), m_graphics_cmdlist.get(),
+		&vertices_buffer, lighting_cube.Vertices.data(),
+		m_lighting_cube_mesh.vertex_uploader.put(), m_lighting_cube_mesh.vertex_default.put());
+
+	m_lighting_cube_mesh.vbv.BufferLocation = m_lighting_cube_mesh.vertex_default->GetGPUVirtualAddress();
+	m_lighting_cube_mesh.vbv.SizeInBytes = buffer_byte_size;
+	m_lighting_cube_mesh.vbv.StrideInBytes = buffer_byte_stride;
+
+	// create the index buffer
+	buffer_byte_stride = sizeof(uint32_t);
+	buffer_byte_size = buffer_byte_stride * lighting_cube.Indices32.size();
+
+	auto indices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
+
+	m_device_resources.create_default_buffer(
+		m_device_resources.device.get(), m_graphics_cmdlist.get(),
+		&indices_buffer, lighting_cube.Indices32.data(),
+		m_lighting_cube_mesh.index_uploader.put(), m_lighting_cube_mesh.index_default.put());
+
+	m_lighting_cube_mesh.ibv.BufferLocation = m_lighting_cube_mesh.index_default->GetGPUVirtualAddress();
+	m_lighting_cube_mesh.ibv.Format = DXGI_FORMAT::DXGI_FORMAT_R16_UINT;
+	m_lighting_cube_mesh.ibv.SizeInBytes = buffer_byte_size;
 }

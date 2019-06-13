@@ -11,7 +11,6 @@ namespace winrt::transformations::implementation
 	model_view_projection::model_view_projection()
 	{
 		InitializeComponent();
-
 		DataContext(m_vm);
 		m_vm.current_swapchain_panel(swapchain_panel());
 	}
@@ -23,9 +22,7 @@ namespace winrt::transformations::implementation
 
 	IAsyncAction model_view_projection::page_loaded(IInspectable const & sender, RoutedEventArgs const & args)
 	{
-		m_app.initialize(m_vm);
-		m_app.load_content();
-		m_app.run();
+		m_vm.initialize_app().Execute(nullptr);
 		co_return;
 	}
 

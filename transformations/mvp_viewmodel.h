@@ -1,15 +1,21 @@
 ﻿#pragma once
 #include "mvp_viewmodel.g.h"
 #include "bindable_base.h"
-#include "mvp_showcase_app.h"
+//#include "mvp_showcase_app.h"
+
+class mvp_showcase_app;
 
 namespace winrt::transformations::implementation
 {
 	struct mvp_viewmodel : mvp_viewmodelT<mvp_viewmodel, transformations::implementation::bindable_base>
 	{
-		mvp_viewmodel();
+		mvp_viewmodel(mvp_showcase_app* app);
+		mvp_viewmodel() = default;
 
 		Windows::UI::Xaml::Input::XamlUICommand initialize_app();
+		Windows::UI::Xaml::Input::XamlUICommand cmd_add_lit_cube();
+		Windows::UI::Xaml::Input::XamlUICommand cmd_add_simple_cube();
+
 		Windows::UI::Xaml::Controls::SwapChainPanel current_swapchain_panel();
 		void current_swapchain_panel(Windows::UI::Xaml::Controls::SwapChainPanel value);
 
@@ -20,7 +26,7 @@ namespace winrt::transformations::implementation
 		float eye_position_z();
 		void eye_position_z(float value);
 		transformations::vector_selection up_direction();
-        void up_direction(transformations::vector_selection value);
+		void up_direction(transformations::vector_selection value);
 		transformations::vector_selection focus_point();
 		void focus_point(transformations::vector_selection value);
 
@@ -60,10 +66,18 @@ namespace winrt::transformations::implementation
 		bool projection_matrix_options_visible();
 
 	private:
-		hstring m_title;
+		std::unique_ptr<mvp_showcase_app> m_app = nullptr;
+
 		Windows::UI::Xaml::Input::XamlUICommand m_initialize_app;
-		Windows::UI::Xaml::Controls::SwapChainPanel m_current_swapchain_panel;
+		Windows::UI::Xaml::Input::XamlUICommand m_cmd_add_lit_cube;
+		Windows::UI::Xaml::Input::XamlUICommand m_cmd_add_simple_cube;
+
 		winrt::Windows::Foundation::IAsyncAction initialize();
+		winrt::Windows::Foundation::IAsyncAction add_lit_cube();
+		winrt::Windows::Foundation::IAsyncAction add_simple_cube();
+
+		hstring m_title;
+		Windows::UI::Xaml::Controls::SwapChainPanel m_current_swapchain_panel;
 
 		float m_eye_position_x = 0.f;
 		float m_eye_position_y = 0.f;

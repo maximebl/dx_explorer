@@ -1,0 +1,16 @@
+namespace transformations
+{
+	//[Windows.UI.Xaml.Markup.ContentPropertyAttribute("Children")]
+	[default_interface]
+	//runtimeclass fold_panel : Windows.UI.Xaml.Controls.Panel
+	runtimeclass fold_panel : Windows.UI.Xaml.Controls.StackPanel
+	{
+		fold_panel();
+
+		static Windows.UI.Xaml.DependencyProperty LabelProperty{ get; };
+		String Label;
+
+		//static Windows.UI.Xaml.DependencyProperty ChildrenProperty{ get; };
+		//Windows.UI.Xaml.Controls.UIElementCollection Children;
+	}
+}

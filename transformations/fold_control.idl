@@ -1,0 +1,14 @@
+namespace transformations
+{
+	[Windows.UI.Xaml.Markup.ContentPropertyAttribute("inner_content")]
+    runtimeclass fold_control : Windows.UI.Xaml.Controls.UserControl
+    {
+        fold_control();
+
+		static Windows.UI.Xaml.DependencyProperty inner_contentProperty{ get; };
+		Windows.UI.Xaml.FrameworkElement inner_content;
+
+		static Windows.UI.Xaml.DependencyProperty labelProperty{ get; };
+		String label;
+    }
+}

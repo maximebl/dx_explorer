@@ -122,6 +122,14 @@
       <DependentUpon>float_to_double.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="fold_control.h">
+      <DependentUpon>fold_control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="fold_panel.h">
+      <DependentUpon>fold_panel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="frame_resource.h" />
     <ClInclude Include="math_helpers.h" />
     <ClInclude Include="mesh.h" />
@@ -145,6 +153,7 @@
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="render_item.h" />
     <ClInclude Include="scalar_slider.h">
       <DependentUpon>scalar_slider.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -161,6 +170,9 @@
     <ApplicationDefinition Include="App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="fold_control.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="MainPage.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -168,6 +180,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="scalar_slider.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Generic.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
@@ -207,6 +222,14 @@
       <DependentUpon>float_to_double.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="fold_control.cpp">
+      <DependentUpon>fold_control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="fold_panel.cpp">
+      <DependentUpon>fold_panel.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="frame_resource.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math_helpers.cpp" />
@@ -234,6 +257,7 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="render_item.cpp" />
     <ClCompile Include="scalar_slider.cpp">
       <DependentUpon>scalar_slider.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -259,6 +283,13 @@
       <SubType>Designer</SubType>
     </Midl>
     <Midl Include="float_to_double.idl">
+      <SubType>Designer</SubType>
+    </Midl>
+    <Midl Include="fold_control.idl">
+      <DependentUpon>fold_control.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="fold_panel.idl">
       <SubType>Designer</SubType>
     </Midl>
     <Midl Include="MainPage.idl">
