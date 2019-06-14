@@ -67,6 +67,7 @@ private:
 	void update_viewport();
 	void update_scissor_rect();
 	void update_mvp_matrix();
+	void update_model_matrices();
 	void create_cmd_record_thread();
 
 	system_info m_system_info;

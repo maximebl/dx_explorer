@@ -194,10 +194,7 @@ void mvp_showcase_app::render()
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
 
-	//m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
-	m_graphics_cmdlist->Close();
-	std::array<ID3D12CommandList*, 1> cmd_lists = { m_graphics_cmdlist.get()};
-	m_cmd_queue->get_cmd_queue()->ExecuteCommandLists((UINT)cmd_lists.size(), &cmd_lists[0]);
+	m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
 
 	m_current_backbuffer_index = m_device_resources.present();
 
@@ -377,8 +374,12 @@ void mvp_showcase_app::update_mvp_matrix()
 	_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
 #endif
 
-	const XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
-	m_model = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
+	update_model_matrices();
+	//XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
+	//XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
+	//XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
+	//XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	//m_model = rotation_matrix * translation_matrix * scaling_matrix;
 
 	// view matrix
 	XMVECTOR eye_position = XMVectorSet(m_current_vm.eye_position_x(), m_current_vm.eye_position_y(), m_current_vm.eye_position_z(), 1);
@@ -435,6 +436,16 @@ void mvp_showcase_app::update_mvp_matrix()
 		reinterpret_cast<void*>(m_mvp_data),
 		reinterpret_cast<void*>(&m_stored_mvp),
 		sizeof(object_constant_buffer));
+}
+
+void mvp_showcase_app::update_model_matrices()
+{
+	XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
+	XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
+	XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
+	XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+
+	m_model = rotation_matrix * translation_matrix * scaling_matrix;
 }
 
 void mvp_showcase_app::create_root_signature()
@@ -659,7 +670,7 @@ void mvp_showcase_app::create_lighting_cube()
 	m_device_resources.create_default_buffer(
 		m_device_resources.device.get(), m_graphics_cmdlist.get(),
 		&vertices_buffer, lighting_cube.Vertices.data(),
-		m_lighting_cube_mesh.vertex_uploader.put(), m_lighting_cube_mesh.vertex_default.put());
+		m_lighting_cube_mesh.vertex_uploader.put(), m_lighting_cube_mesh.vertex_default.put(), L"lit_cube_vertex_buffer");
 
 	m_lighting_cube_mesh.vbv.BufferLocation = m_lighting_cube_mesh.vertex_default->GetGPUVirtualAddress();
 	m_lighting_cube_mesh.vbv.SizeInBytes = buffer_byte_size;
@@ -674,7 +685,7 @@ void mvp_showcase_app::create_lighting_cube()
 	m_device_resources.create_default_buffer(
 		m_device_resources.device.get(), m_graphics_cmdlist.get(),
 		&indices_buffer, lighting_cube.Indices32.data(),
-		m_lighting_cube_mesh.index_uploader.put(), m_lighting_cube_mesh.index_default.put());
+		m_lighting_cube_mesh.index_uploader.put(), m_lighting_cube_mesh.index_default.put(), L"lit_cube_index_buffer");
 
 	m_lighting_cube_mesh.ibv.BufferLocation = m_lighting_cube_mesh.index_default->GetGPUVirtualAddress();
 	m_lighting_cube_mesh.ibv.Format = DXGI_FORMAT::DXGI_FORMAT_R16_UINT;

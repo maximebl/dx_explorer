@@ -31,7 +31,7 @@ public:
 		const void* data, 
 		ID3D12Resource** upload_buffer, 
 		ID3D12Resource** default_buffer,
-		hstring buffer_name);
+		winrt::hstring buffer_name);
 
 	winrt::com_ptr<ID3DBlob> compile_shader_from_file(winrt::hstring filename, std::string entry_point, std::string target);
 	ID3D12Resource* get_render_target(uint32_t index);
