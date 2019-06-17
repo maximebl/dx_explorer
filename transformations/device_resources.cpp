@@ -17,6 +17,7 @@ void device_resources::create_device(winrt::com_ptr<IDXGIAdapter4> adapter)
 {
 	check_hresult(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_11_1, guid_of<ID3D12Device>(), device.put_void()));
 	m_rtv_increment_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_cbv_srv_uav_increment_size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void device_resources::create_xaml_swapchain(std::shared_ptr<cmd_queue>& cmd_queue, winrt::Windows::UI::Xaml::Controls::SwapChainPanel swapchain_panel, com_ptr<IDXGIFactory7> dxgi_factory, UINT width, UINT height)

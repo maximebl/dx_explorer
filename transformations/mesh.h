@@ -7,17 +7,10 @@ public:
 	mesh();
 	~mesh();
 
-	struct allocation
-	{
-		void* CPU;
-		D3D12_GPU_VIRTUAL_ADDRESS GPU;
-	};
-
-	allocation vertex_allocation;
-	allocation index_allocation;
-
 	std::string name = "";
+	// constant buffer data
 
+	// vertex data
 	winrt::com_ptr<ID3D12Resource> vertex_uploader = nullptr;
 	winrt::com_ptr<ID3D12Resource> vertex_default = nullptr;
 	UINT vertex_byte_stride = 0;
@@ -25,6 +18,7 @@ public:
 	UINT vertex_count;
 	D3D12_VERTEX_BUFFER_VIEW vbv;
 
+	// index data
 	winrt::com_ptr<ID3D12Resource> index_uploader = nullptr;
 	winrt::com_ptr<ID3D12Resource> index_default = nullptr;
 	UINT index_count = 0;

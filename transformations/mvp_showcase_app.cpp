@@ -38,18 +38,22 @@ void mvp_showcase_app::create_cmd_objects()
 		nullptr,
 		guid_of<ID3D12GraphicsCommandList>(),
 		m_graphics_cmdlist.put_void()));
-
 	check_hresult(m_graphics_cmdlist->SetName(L"graphics_cmdlist"));
+
+	check_hresult(m_device_resources.device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
+		guid_of<ID3D12CommandAllocator>(),
+		ui_requests_cmd_allocator.put_void()));
+	check_hresult(ui_requests_cmd_allocator->SetName(L"ui_requests_allocator"));
 
 	check_hresult(m_device_resources.device->CreateCommandList(
 		0,
 		D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT,
-		m_frame_resources[m_frame_resource_index]->ui_requests_cmd_allocator.get(),
+		ui_requests_cmd_allocator.get(),
 		nullptr,
 		guid_of<ID3D12GraphicsCommandList>(),
 		m_ui_requests_cmdlist.put_void()));
-
 	check_hresult(m_ui_requests_cmdlist->SetName(L"ui_requests_cmdlist"));
+	check_hresult(m_ui_requests_cmdlist->Close());
 }
 
 bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
@@ -90,7 +94,7 @@ bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 		m_device_resources.create_rtv();
 		m_device_resources.create_sampler_heap();
 		m_device_resources.create_sampler();
-		create_srv_cbv_uav_heap(1);
+		create_srv_cbv_uav_heap(20);
 		create_root_signature();
 	}
 }
@@ -98,9 +102,8 @@ bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 void mvp_showcase_app::load_content()
 {
 	compile_shaders();
-	create_mvp_cbv();
+	create_view_proj_cbv();
 	create_pso();
-	create_simple_cube(m_graphics_cmdlist.get());
 	m_cmd_queue->execute_cmd_list(m_graphics_cmdlist);
 	m_cmd_queue->flush_cmd_queue();
 }
@@ -164,7 +167,6 @@ void mvp_showcase_app::render()
 	check_hresult(m_current_frame_resource->cmd_allocator->Reset());
 	check_hresult(m_graphics_cmdlist->Reset(m_current_frame_resource->cmd_allocator.get(), nullptr));
 
-
 	//D3D12 WARNING: ID3D12CommandList::DrawInstanced: Viewport: 0 is non-empty while the corresponding scissor rectangle is empty.  
 	//Nothing will be written to the render target when this viewport is selected.  In D3D12, scissor testing is always enabled. [ EXECUTION WARNING #695: DRAW_EMPTY_SCISSOR_RECTANGLE]
 	m_graphics_cmdlist->RSSetScissorRects(1, &m_scissor_rect);
@@ -208,9 +210,11 @@ void mvp_showcase_app::build_frame_resources()
 {
 	for (uint32_t i = 0; i < frame_count; ++i)
 	{
-		m_frame_resources.push_back(
-			std::make_unique<frame_resource>(m_device_resources.device)
-		);
+		m_frame_resources.push_back(std::make_unique<frame_resource>(m_device_resources.device));
+
+		std::wstring current_id = std::to_wstring(i);
+		std::wstring alloc_name = L"graphics_allocator_" + current_id;
+		check_hresult(m_frame_resources[i]->cmd_allocator->SetName(alloc_name.c_str()));
 	}
 }
 
@@ -335,8 +339,12 @@ void mvp_showcase_app::create_pso()
 
 void mvp_showcase_app::draw_render_items()
 {
+	// draw every render_item of every frame_resource
 	for (int i = 0; i < render_items.size(); ++i)
 	{
+		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.index_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_INDEX_BUFFER);
+		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.vertex_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
 		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &render_items[i].mesh_geometry.vbv);
 		m_graphics_cmdlist->IASetIndexBuffer(&render_items[i].mesh_geometry.ibv);
 		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -365,21 +373,7 @@ void mvp_showcase_app::update_scissor_rect()
 
 void mvp_showcase_app::update_mvp_matrix()
 {
-	// model matrix
-#if defined(DEBUG) || defined(_DEBUG)  
-	bool axis_x = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_x());
-	bool axis_y = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_y());
-	bool axis_z = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_z());
-	bool is_all_zeros = axis_x && axis_y && axis_z;
-	_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
-#endif
-
 	update_model_matrices();
-	//XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
-	//XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
-	//XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
-	//XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
-	//m_model = rotation_matrix * translation_matrix * scaling_matrix;
 
 	// view matrix
 	XMVECTOR eye_position = XMVectorSet(m_current_vm.eye_position_x(), m_current_vm.eye_position_y(), m_current_vm.eye_position_z(), 1);
@@ -427,25 +421,49 @@ void mvp_showcase_app::update_mvp_matrix()
 	m_projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_current_vm.field_of_view()), aspect_ratio, m_current_vm.near_z(), m_current_vm.far_z());
 
 	// mvp matrix
-	XMMATRIX mvp = XMMatrixMultiply(m_model, m_view);
-	mvp = XMMatrixMultiply(mvp, m_projection);
+	//XMMATRIX mvp = XMMatrixMultiply(m_view, m_projection);
+	//mvp = XMMatrixMultiply(mvp, m_projection);
 
 	// upload
-	XMStoreFloat4x4(&m_stored_mvp, mvp);
+	XMStoreFloat4x4(&m_stored_mvp.view, XMMatrixTranspose(m_view));
+	XMStoreFloat4x4(&m_stored_mvp.projection, XMMatrixTranspose(m_projection));
+
 	memcpy(
 		reinterpret_cast<void*>(m_mvp_data),
 		reinterpret_cast<void*>(&m_stored_mvp),
-		sizeof(object_constant_buffer));
+		sizeof(view_proj_cb));
 }
 
 void mvp_showcase_app::update_model_matrices()
 {
+	// model matrix
+#if defined(DEBUG) || defined(_DEBUG)  
+	bool axis_x = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_x());
+	bool axis_y = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_y());
+	bool axis_z = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_z());
+	bool is_all_zeros = axis_x && axis_y && axis_z;
+	_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
+#endif
+
 	XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
 	XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
 	XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
 	XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
 	m_model = rotation_matrix * translation_matrix * scaling_matrix;
+
+	// upload
+	XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
+
+	for (auto& render_item : render_items)
+	{
+		if (test_bool)
+		{
+			memcpy(reinterpret_cast<void*>(render_item.constant_buffer_allocation.CPU),
+				reinterpret_cast<void*>(&m_stored_model_matrix),
+				sizeof(model_cb));
+		}
+	}
 }
 
 void mvp_showcase_app::create_root_signature()
@@ -456,7 +474,7 @@ void mvp_showcase_app::create_root_signature()
 
 	D3D12_DESCRIPTOR_RANGE descriptor_range_cb;
 	descriptor_range_cb.BaseShaderRegister = 0;
-	descriptor_range_cb.NumDescriptors = 1;
+	descriptor_range_cb.NumDescriptors = 2;
 	descriptor_range_cb.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//indicates this range should immediately follow the preceding range.
 	descriptor_range_cb.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	descriptor_range_cb.RegisterSpace = 0;
@@ -516,7 +534,7 @@ void mvp_showcase_app::create_root_signature()
 		m_root_signature.put_void()));
 }
 
-void mvp_showcase_app::create_mvp_cbv()
+void mvp_showcase_app::create_view_proj_cbv()
 {
 	//create upload buffer
 	D3D12_HEAP_PROPERTIES upload_heap_props;
@@ -534,7 +552,7 @@ void mvp_showcase_app::create_mvp_cbv()
 	cbv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
 	cbv_resource_desc.Height = 1;
 	// align to 256 bytes (minimum hardware allocation size)
-	cbv_resource_desc.Width = (sizeof(object_constant_buffer) + 255) & ~255;
+	cbv_resource_desc.Width = (sizeof(view_proj_cb) + 255) & ~255;
 	//Layout must be D3D12_TEXTURE_LAYOUT_ROW_MAJOR when D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER
 	cbv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	cbv_resource_desc.MipLevels = 1;
@@ -554,16 +572,70 @@ void mvp_showcase_app::create_mvp_cbv()
 
 	D3D12_RANGE range;
 	range.Begin = 0;
-	range.End = sizeof(object_constant_buffer);
-	//m_mvp_data = nullptr;
+	range.End = sizeof(view_proj_cb);
 	m_cbv_uploaded_resource->Map(0, &range, reinterpret_cast<void**>(&m_mvp_data));
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
 	cbv_desc.BufferLocation = m_cbv_uploaded_resource->GetGPUVirtualAddress();
 	//Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
-	cbv_desc.SizeInBytes = (sizeof(object_constant_buffer) + 255) & ~255;
+	cbv_desc.SizeInBytes = (sizeof(view_proj_cb) + 255) & ~255;
 
 	m_device_resources.device->CreateConstantBufferView(&cbv_desc, m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart());
+}
+
+void mvp_showcase_app::create_model_cbv()
+{
+	render_item& render_item = render_items.back();
+
+	//create upload buffer
+	D3D12_HEAP_PROPERTIES upload_heap_props;
+	upload_heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY::D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	upload_heap_props.CreationNodeMask = 0;
+	upload_heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL::D3D12_MEMORY_POOL_UNKNOWN;
+	upload_heap_props.Type = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD;
+	upload_heap_props.VisibleNodeMask = 0;
+
+	D3D12_RESOURCE_DESC cbv_resource_desc;
+	cbv_resource_desc.Alignment = 0;
+	cbv_resource_desc.DepthOrArraySize = 1;
+	cbv_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbv_resource_desc.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+	cbv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
+	cbv_resource_desc.Height = 1;
+	// align to 256 bytes (minimum hardware allocation size)
+	cbv_resource_desc.Width = (sizeof(model_cb) + 255) & ~255;
+	//Layout must be D3D12_TEXTURE_LAYOUT_ROW_MAJOR when D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER
+	cbv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	cbv_resource_desc.MipLevels = 1;
+	cbv_resource_desc.SampleDesc.Count = 1;
+	cbv_resource_desc.SampleDesc.Quality = 0;
+
+	check_hresult(m_device_resources.device->CreateCommittedResource(
+		&upload_heap_props,
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&cbv_resource_desc,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		guid_of<ID3D12Resource>(),
+		render_item.model_cbv_uploader.put_void()));
+
+	D3D12_RANGE range;
+	range.Begin = 0;
+	range.End = sizeof(model_cb);
+	render_item.model_cbv_uploader->Map(0, &range, &render_item.constant_buffer_allocation.CPU);
+	render_item.constant_buffer_allocation.GPU = render_item.model_cbv_uploader->GetGPUVirtualAddress();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc;
+	cbv_desc.BufferLocation = render_item.constant_buffer_allocation.GPU;
+	//Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
+	cbv_desc.SizeInBytes = (sizeof(model_cb) + 255) & ~255;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart();
+	// mvp_data takes the first index in the cbv descriptor table
+	UINT heap_index = render_items.size();
+	handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
+
+	m_device_resources.device->CreateConstantBufferView(&cbv_desc, handle);
 }
 
 void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
@@ -647,12 +719,16 @@ void mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
 
 void mvp_showcase_app::create_cube()
 {
+	check_hresult(ui_requests_cmd_allocator->Reset());
+	check_hresult(m_ui_requests_cmdlist->Reset(ui_requests_cmd_allocator.get(), nullptr));
+
 	create_simple_cube(m_ui_requests_cmdlist.get());
+	create_model_cbv();
 
 	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);
 
-	check_hresult(m_current_frame_resource->ui_requests_cmd_allocator->Reset());
-	check_hresult(m_ui_requests_cmdlist->Reset(m_current_frame_resource->ui_requests_cmd_allocator.get(), nullptr));
+	m_cmd_queue->flush_cmd_queue();
+	test_bool = true;
 }
 
 void mvp_showcase_app::create_lighting_cube()

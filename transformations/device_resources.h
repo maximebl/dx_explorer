@@ -43,12 +43,14 @@ public:
 	winrt::com_ptr<ID3D12DescriptorHeap> rtv_heap;
 	constexpr static uint8_t buffer_count = 3;
 
+	UINT m_rtv_increment_size;
+	UINT m_cbv_srv_uav_increment_size;
+
 private:
 	winrt::com_ptr<ID3D12Resource> m_dsv;
 	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource;
 	winrt::com_ptr<IDXGISwapChain1> m_swapchain;
 	std::array<winrt::com_ptr<ID3D12Resource>, buffer_count> m_swapchain_buffers;
-	UINT m_rtv_increment_size;
 	DXGI_FORMAT m_back_buffer_format = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 };
 

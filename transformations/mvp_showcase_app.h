@@ -13,6 +13,7 @@
 class mvp_showcase_app
 {
 public:
+	bool test_bool = false;
 	~mvp_showcase_app();
 	mvp_showcase_app();
 
@@ -21,7 +22,8 @@ public:
 	void run();
 
 	void create_root_signature();
-	void create_mvp_cbv();
+	void create_view_proj_cbv();
+	void create_model_cbv();
 	void create_srv_cbv_uav_heap(uint32_t descriptor_count);
 	void render();
 	void update();
@@ -43,9 +45,21 @@ public:
 
 private:
 
-	struct object_constant_buffer
+	struct view_proj_matrix
 	{
-		DirectX::XMFLOAT4X4 model_view_projection;
+		DirectX::XMMATRIX view;
+		DirectX::XMMATRIX projection;
+	};
+
+	struct view_proj_cb
+	{
+		DirectX::XMFLOAT4X4 view;
+		DirectX::XMFLOAT4X4 projection;
+	};
+
+	struct model_cb
+	{
+		DirectX::XMFLOAT4X4 model;
 	};
 
 	transformations::mvp_viewmodel m_current_vm;
@@ -75,6 +89,8 @@ private:
 
 	std::shared_ptr<cmd_queue> m_cmd_queue = nullptr;
 	winrt::com_ptr<ID3D12GraphicsCommandList4> m_graphics_cmdlist = nullptr;
+
+	winrt::com_ptr<ID3D12CommandAllocator> ui_requests_cmd_allocator;
 	winrt::com_ptr<ID3D12GraphicsCommandList4> m_ui_requests_cmdlist = nullptr;
 
 	winrt::com_ptr<ID3D12RootSignature> m_root_signature = nullptr;
@@ -85,11 +101,12 @@ private:
 	HANDLE m_cmd_recording_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
 
-	//mesh m_cube_mesh;
 	std::vector<render_item> render_items;
 
 	std::byte* m_mvp_data;
-	DirectX::XMFLOAT4X4 m_stored_mvp;
+	
+	view_proj_cb m_stored_mvp;
+	DirectX::XMFLOAT4X4 m_stored_model_matrix;
     DirectX::XMMATRIX m_model;
     DirectX::XMMATRIX m_view;
     DirectX::XMMATRIX m_projection;
