@@ -420,10 +420,6 @@ void mvp_showcase_app::update_mvp_matrix()
 	float aspect_ratio = m_current_vm.viewport_width() / m_current_vm.viewport_height();
 	m_projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_current_vm.field_of_view()), aspect_ratio, m_current_vm.near_z(), m_current_vm.far_z());
 
-	// mvp matrix
-	//XMMATRIX mvp = XMMatrixMultiply(m_view, m_projection);
-	//mvp = XMMatrixMultiply(mvp, m_projection);
-
 	// upload
 	XMStoreFloat4x4(&m_stored_mvp.view, XMMatrixTranspose(m_view));
 	XMStoreFloat4x4(&m_stored_mvp.projection, XMMatrixTranspose(m_projection));
@@ -451,18 +447,13 @@ void mvp_showcase_app::update_model_matrices()
 	XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
 	m_model = rotation_matrix * translation_matrix * scaling_matrix;
-
-	// upload
 	XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
 
 	for (auto& render_item : render_items)
 	{
-		if (test_bool)
-		{
-			memcpy(reinterpret_cast<void*>(render_item.constant_buffer_allocation.CPU),
-				reinterpret_cast<void*>(&m_stored_model_matrix),
-				sizeof(model_cb));
-		}
+		memcpy(reinterpret_cast<void*>(render_item.constant_buffer_allocation.CPU),
+			reinterpret_cast<void*>(&m_stored_model_matrix),
+			sizeof(model_cb));
 	}
 }
 
@@ -728,7 +719,6 @@ void mvp_showcase_app::create_cube()
 	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);
 
 	m_cmd_queue->flush_cmd_queue();
-	test_bool = true;
 }
 
 void mvp_showcase_app::create_lighting_cube()

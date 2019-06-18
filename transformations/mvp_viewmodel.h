@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "mvp_viewmodel.g.h"
 #include "bindable_base.h"
-//#include "mvp_showcase_app.h"
 
 class mvp_showcase_app;
 

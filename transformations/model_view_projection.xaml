@@ -65,6 +65,14 @@
 
             <ScrollViewer Height="600" VerticalScrollBarVisibility="Auto" Padding="20">
                 <StackPanel>
+                    <local:fold_control HorizontalAlignment="Stretch" label="Transforms" Visibility="Visible">
+                        <local:fold_control.inner_content>
+                            <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
+                                <local:scalar_slider label="Scale X" scalar_value="{x:Bind mesh_vm.scale.X, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="1"/>
+                            </StackPanel>
+                        </local:fold_control.inner_content>
+                    </local:fold_control>
+
                     <local:fold_control HorizontalAlignment="Stretch" label="Model matrix" Visibility="{x:Bind vm.model_matrix_options_visible, Mode=OneWay}">
                         <local:fold_control.inner_content>
                             <StackPanel Orientation="Vertical" Padding="0,0,0,0" >

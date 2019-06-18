@@ -43,6 +43,9 @@
       <Filter>views</Filter>
     </Midl>
     <Midl Include="fold_control.idl" />
+    <Midl Include="mesh_vm.idl">
+      <Filter>view_models</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />

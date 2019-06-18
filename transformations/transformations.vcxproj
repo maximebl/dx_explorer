@@ -133,6 +133,10 @@
     <ClInclude Include="frame_resource.h" />
     <ClInclude Include="math_helpers.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="mesh_vm.h">
+      <DependentUpon>mesh_vm.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="model_view_projection.h">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -234,6 +238,10 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math_helpers.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="mesh_vm.cpp">
+      <DependentUpon>mesh_vm.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="model_view_projection.cpp">
       <DependentUpon>model_view_projection.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -294,6 +302,9 @@
     </Midl>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="mesh_vm.idl">
+      <SubType>Designer</SubType>
     </Midl>
     <Midl Include="model_view_projection.idl">
       <DependentUpon>model_view_projection.xaml</DependentUpon>

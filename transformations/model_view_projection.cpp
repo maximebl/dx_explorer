@@ -20,6 +20,11 @@ namespace winrt::transformations::implementation
 		return m_vm;
 	}
 
+	transformations::mesh_vm model_view_projection::mesh_vm()
+	{
+		return m_mesh_vm;
+	}
+
 	IAsyncAction model_view_projection::page_loaded(IInspectable const & sender, RoutedEventArgs const & args)
 	{
 		m_vm.initialize_app().Execute(nullptr);

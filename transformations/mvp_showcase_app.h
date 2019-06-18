@@ -13,7 +13,6 @@
 class mvp_showcase_app
 {
 public:
-	bool test_bool = false;
 	~mvp_showcase_app();
 	mvp_showcase_app();
 

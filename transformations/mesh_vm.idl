@@ -1,0 +1,11 @@
+import "bindable_base.idl";
+
+namespace transformations
+{
+    runtimeclass mesh_vm : bindable_base
+    {
+        mesh_vm();
+
+		Windows.Foundation.Numerics.Vector3 scale;
+    }
+}
