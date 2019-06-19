@@ -444,17 +444,25 @@ void mvp_showcase_app::update_model_matrices()
 	XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
 	XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
 	XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
-	XMMATRIX scaling_matrix = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	XMMATRIX scaling_matrix = XMMatrixScaling(m_current_vm.selected_mesh().scale().x(), m_current_vm.selected_mesh().scale().y(), m_current_vm.selected_mesh().scale().z());
 
 	m_model = rotation_matrix * translation_matrix * scaling_matrix;
 	XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
 
-	for (auto& render_item : render_items)
+	//for (auto& render_item : render_items)
+	//{
+	int32_t current_index = m_current_vm.selected_mesh().as<transformations::implementation::mesh_vm>()->index;
+
+	if (render_items.size() > current_index)
 	{
-		memcpy(reinterpret_cast<void*>(render_item.constant_buffer_allocation.CPU),
-			reinterpret_cast<void*>(&m_stored_model_matrix),
-			sizeof(model_cb));
+		if (render_items[current_index].constant_buffer_allocation.CPU != nullptr)
+		{
+			memcpy(reinterpret_cast<void*>(render_items[current_index].constant_buffer_allocation.CPU),
+				reinterpret_cast<void*>(&m_stored_model_matrix),
+				sizeof(model_cb));
+		}
 	}
+	//}
 }
 
 void mvp_showcase_app::create_root_signature()
@@ -718,7 +726,7 @@ void mvp_showcase_app::create_cube()
 
 	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);
 
-	m_cmd_queue->flush_cmd_queue();
+	//m_cmd_queue->flush_cmd_queue();
 }
 
 void mvp_showcase_app::create_lighting_cube()

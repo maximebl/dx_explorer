@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "mvp_viewmodel.g.h"
 #include "bindable_base.h"
+#include "mesh_vm.h"
 
 class mvp_showcase_app;
 
@@ -10,6 +11,10 @@ namespace winrt::transformations::implementation
 	{
 		mvp_viewmodel(mvp_showcase_app* app);
 		mvp_viewmodel() = default;
+
+		transformations::mesh_vm selected_mesh();
+		void selected_mesh(transformations::mesh_vm value);
+		Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> meshes();
 
 		Windows::UI::Xaml::Input::XamlUICommand initialize_app();
 		Windows::UI::Xaml::Input::XamlUICommand cmd_add_lit_cube();
@@ -63,8 +68,14 @@ namespace winrt::transformations::implementation
 		bool view_matrix_options_visible();
 		void projection_matrix_options_visible(bool value);
 		bool projection_matrix_options_visible();
+		void transforms_options_visible(bool value);
+		bool transforms_options_visible();
 
 	private:
+		winrt::apartment_context m_ui_thread;
+
+		transformations::mesh_vm m_selected_mesh = winrt::make<transformations::implementation::mesh_vm>();
+		Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> m_meshes = winrt::single_threaded_observable_vector<transformations::mesh_vm>();
 		std::unique_ptr<mvp_showcase_app> m_app = nullptr;
 
 		Windows::UI::Xaml::Input::XamlUICommand m_initialize_app;
@@ -101,6 +112,7 @@ namespace winrt::transformations::implementation
 		bool m_view_matrix_options_visible = true;
 		bool m_projection_matrix_options_visible = true;
 		bool m_viewport_options_visible = true;
+		bool m_transforms_options_visible = true;
 
 		transformations::vector_selection m_up_direction = transformations::vector_selection::y;
 	};

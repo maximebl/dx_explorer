@@ -118,16 +118,16 @@
       <DependentUpon>enum_to_bool.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
+    <ClInclude Include="float3.h">
+      <DependentUpon>float3.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
     <ClInclude Include="float_to_double.h">
       <DependentUpon>float_to_double.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="fold_control.h">
       <DependentUpon>fold_control.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="fold_panel.h">
-      <DependentUpon>fold_panel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
     <ClInclude Include="frame_resource.h" />
@@ -222,16 +222,16 @@
       <DependentUpon>enum_to_bool.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
+    <ClCompile Include="float3.cpp">
+      <DependentUpon>float3.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
     <ClCompile Include="float_to_double.cpp">
       <DependentUpon>float_to_double.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="fold_control.cpp">
       <DependentUpon>fold_control.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="fold_panel.cpp">
-      <DependentUpon>fold_panel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="frame_resource.cpp" />
@@ -290,15 +290,15 @@
     <Midl Include="enum_to_bool.idl">
       <SubType>Designer</SubType>
     </Midl>
+    <Midl Include="float3.idl">
+      <SubType>Designer</SubType>
+    </Midl>
     <Midl Include="float_to_double.idl">
       <SubType>Designer</SubType>
     </Midl>
     <Midl Include="fold_control.idl">
       <DependentUpon>fold_control.xaml</DependentUpon>
       <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="fold_panel.idl">
-      <SubType>Designer</SubType>
     </Midl>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>

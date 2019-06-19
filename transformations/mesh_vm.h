@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "mesh_vm.g.h"
 #include "bindable_base.h"
+#include "float3.h"
 
 namespace winrt::transformations::implementation
 {
@@ -8,13 +9,15 @@ namespace winrt::transformations::implementation
 	{
 		mesh_vm() = default;
 
-		Windows::Foundation::Numerics::float3 scale();
-		void scale(Windows::Foundation::Numerics::float3 value);
+		int32_t index = 0;
+		transformations::float3 scale();
+		void scale(transformations::float3 value);
 
 	private:
-		Windows::Foundation::Numerics::float3 m_scale;
+		transformations::float3 m_scale = winrt::make<transformations::implementation::float3>(1.0f, 1.0f, 1.0f);
 	};
 }
+
 namespace winrt::transformations::factory_implementation
 {
 	struct mesh_vm : mesh_vmT<mesh_vm, implementation::mesh_vm>

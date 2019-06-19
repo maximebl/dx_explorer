@@ -39,11 +39,11 @@
     <Midl Include="not_zero.idl">
       <Filter>views\converters</Filter>
     </Midl>
-    <Midl Include="fold_panel.idl">
-      <Filter>views</Filter>
-    </Midl>
     <Midl Include="fold_control.idl" />
     <Midl Include="mesh_vm.idl">
+      <Filter>view_models</Filter>
+    </Midl>
+    <Midl Include="float3.idl">
       <Filter>view_models</Filter>
     </Midl>
   </ItemGroup>
@@ -95,6 +95,7 @@
     <ClCompile Include="xaml_helpers.cpp" />
     <ClCompile Include="fold_control.cpp" />
     <ClCompile Include="render_item.cpp" />
+    <ClCompile Include="mesh_vm.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -145,6 +146,7 @@
     <ClInclude Include="xaml_helpers.h" />
     <ClInclude Include="fold_control.h" />
     <ClInclude Include="render_item.h" />
+    <ClInclude Include="mesh_vm.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">

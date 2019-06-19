@@ -1,5 +1,4 @@
 import "mvp_viewmodel.idl";
-import "mesh_vm.idl";
 
 namespace transformations
 {
@@ -8,6 +7,5 @@ namespace transformations
 	{
 		model_view_projection();
 		mvp_viewmodel vm{ get; };
-		mesh_vm mesh_vm{ get; };
 	}
 }

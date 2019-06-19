@@ -1,0 +1,13 @@
+import "bindable_base.idl";
+
+namespace transformations
+{
+    runtimeclass float3 : bindable_base
+    {
+        float3(Single x, Single y, Single z);
+
+		Single x;
+		Single y;
+		Single z;
+    }
+}

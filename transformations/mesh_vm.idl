@@ -1,11 +1,14 @@
 import "bindable_base.idl";
+import "float3.idl";
 
 namespace transformations
 {
-    runtimeclass mesh_vm : bindable_base
-    {
-        mesh_vm();
+	runtimeclass mesh_vm : bindable_base
+	{
+		mesh_vm();
 
-		Windows.Foundation.Numerics.Vector3 scale;
-    }
+		//transformations.float3 scale;
+		//Single scale;
+		float3 scale;
+	}
 }

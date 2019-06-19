@@ -42,6 +42,7 @@
                 <ToggleMenuFlyoutItem Text="Model matrix" IsChecked="{x:Bind vm.model_matrix_options_visible, Mode=TwoWay}" />
                 <ToggleMenuFlyoutItem Text="View matrix" IsChecked="{x:Bind vm.view_matrix_options_visible, Mode=TwoWay}" />
                 <ToggleMenuFlyoutItem Text="Projection matrix" IsChecked="{x:Bind vm.projection_matrix_options_visible, Mode=TwoWay}" />
+                <ToggleMenuFlyoutItem Text="Transforms" IsChecked="{x:Bind vm.transforms_options_visible, Mode=TwoWay}" />
                 <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Default view"/>
             </MenuBarItem>
@@ -65,10 +66,12 @@
 
             <ScrollViewer Height="600" VerticalScrollBarVisibility="Auto" Padding="20">
                 <StackPanel>
-                    <local:fold_control HorizontalAlignment="Stretch" label="Transforms" Visibility="Visible">
+                    <local:fold_control HorizontalAlignment="Stretch" label="Transforms" Visibility="{x:Bind vm.transforms_options_visible, Mode=OneWay}">
                         <local:fold_control.inner_content>
                             <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
-                                <local:scalar_slider label="Scale X" scalar_value="{x:Bind mesh_vm.scale.X, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="1"/>
+                                <local:scalar_slider label="Scale X" scalar_value="{x:Bind vm.selected_mesh.scale.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
+                                <local:scalar_slider label="Scale Y" scalar_value="{x:Bind vm.selected_mesh.scale.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
+                                <local:scalar_slider label="Scale Z" scalar_value="{x:Bind vm.selected_mesh.scale.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
                             </StackPanel>
                         </local:fold_control.inner_content>
                     </local:fold_control>

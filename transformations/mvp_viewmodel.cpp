@@ -6,11 +6,14 @@
 
 using namespace winrt::Windows::UI::Xaml::Input;
 using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::transformations::implementation
 {
 	mvp_viewmodel::mvp_viewmodel(mvp_showcase_app* app)
 	{
+		m_ui_thread = winrt::apartment_context();
+
 		m_app.reset(app);
 
 		m_initialize_app.ExecuteRequested(
@@ -30,6 +33,21 @@ namespace winrt::transformations::implementation
 			add_simple_cube();
 			co_return;
 		});
+	}
+
+	transformations::mesh_vm mvp_viewmodel::selected_mesh()
+	{
+		return m_selected_mesh;
+	}
+
+	void mvp_viewmodel::selected_mesh(transformations::mesh_vm value)
+	{
+		update_value(L"selected_mesh", m_selected_mesh, value);
+	}
+
+	IObservableVector<transformations::mesh_vm> mvp_viewmodel::meshes()
+	{
+		return m_meshes;
 	}
 
 	XamlUICommand mvp_viewmodel::initialize_app()
@@ -237,6 +255,16 @@ namespace winrt::transformations::implementation
 		return m_projection_matrix_options_visible;
 	}
 
+	void mvp_viewmodel::transforms_options_visible(bool value)
+	{
+		update_value(L"transforms_options_visible", m_transforms_options_visible, value);
+	}
+
+	bool mvp_viewmodel::transforms_options_visible()
+	{
+		return m_transforms_options_visible;
+	}
+
 	transformations::vector_selection mvp_viewmodel::up_direction()
 	{
 		return m_up_direction;
@@ -265,6 +293,11 @@ namespace winrt::transformations::implementation
 
 	IAsyncAction mvp_viewmodel::add_simple_cube()
 	{
+		transformations::mesh_vm new_mesh;
+		new_mesh.as<transformations::implementation::mesh_vm>()->index = meshes().Size();
+		selected_mesh(new_mesh.as<transformations::mesh_vm>());
+		meshes().Append(new_mesh);
+
 		co_await winrt::resume_background();
 		m_app->create_cube();
 		co_return;
