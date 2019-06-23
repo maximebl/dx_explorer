@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel Orientation="Vertical" Padding="0,0,0,10">
+    <StackPanel Orientation="Vertical" Padding="0,0,0,0">
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
 
@@ -30,13 +30,13 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
 
-        <RelativePanel>
+        <RelativePanel >
             <TextBlock x:Name="model_label" FontWeight="ExtraBlack" Text="{x:Bind label, Mode=OneWay}"/>
-            <Button Click="visibility_toggle_click" Background="Transparent" VerticalAlignment="Top" HorizontalAlignment="Right" Height="20" BorderBrush="Transparent" BorderThickness="0"
+            <Button Click="visibility_toggle_click" Background="Transparent" HorizontalAlignment="Right" Height="20" BorderBrush="Transparent" BorderThickness="0"
                     RelativePanel.RightOf="model_label" RelativePanel.AlignRightWithPanel="True">
                 <SymbolIcon Symbol="More"/>
             </Button>
         </RelativePanel>
-        <ContentControl IsTabStop="False" x:Name="content_control" HorizontalContentAlignment="Stretch" Content="{x:Bind inner_content, Mode=OneWay}"/>
+        <ContentControl IsTabStop="False" x:Name="content_control" HorizontalContentAlignment="Stretch" Content="{x:Bind inner_content, Mode=OneWay}" />
     </StackPanel>
 </UserControl>

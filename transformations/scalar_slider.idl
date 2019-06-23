@@ -19,5 +19,8 @@ namespace transformations
 
 		static Windows.UI.Xaml.DependencyProperty step_frequencyProperty{ get; };
 		Double step_frequency;
+
+		static Windows.UI.Xaml.DependencyProperty is_manipulatingProperty{ get; };
+		Boolean is_manipulating;
     }
 }

@@ -14,6 +14,18 @@ namespace winrt::transformations::implementation
 		InitializeComponent();
 	}
 
+	winrt::Windows::Foundation::IAsyncAction scalar_slider::manip_starting(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & args)
+	{
+		is_manipulating(true);
+		co_return;
+	}
+
+	winrt::Windows::Foundation::IAsyncAction scalar_slider::manip_completed(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & args)
+	{
+		is_manipulating(false);
+		co_return;
+	}
+
 	winrt::event_token scalar_slider::PropertyChanged(Windows::UI::Xaml::Data::PropertyChangedEventHandler const& handler)
 	{
 		return m_property_changed.add(handler);
@@ -53,8 +65,15 @@ namespace winrt::transformations::implementation
 	);
 
 	Windows::UI::Xaml::DependencyProperty scalar_slider::m_step_frequency_property = Windows::UI::Xaml::DependencyProperty::Register(
-		L"scalar_max",
+		L"step_frequency",
 		winrt::xaml_typename<double>(),
+		winrt::xaml_typename<winrt::transformations::scalar_slider>(),
+		Windows::UI::Xaml::PropertyMetadata{ nullptr }
+	);
+
+	Windows::UI::Xaml::DependencyProperty scalar_slider::m_is_manipulating_property = Windows::UI::Xaml::DependencyProperty::Register(
+		L"is_manipulating",
+		winrt::xaml_typename<bool>(),
 		winrt::xaml_typename<winrt::transformations::scalar_slider>(),
 		Windows::UI::Xaml::PropertyMetadata{ nullptr }
 	);
@@ -82,6 +101,11 @@ namespace winrt::transformations::implementation
 	Windows::UI::Xaml::DependencyProperty scalar_slider::step_frequencyProperty()
 	{
 		return m_step_frequency_property;
+	}
+
+	Windows::UI::Xaml::DependencyProperty scalar_slider::is_manipulatingProperty()
+	{
+		return m_is_manipulating_property;
 	}
 
 	hstring scalar_slider::label()
@@ -136,5 +160,16 @@ namespace winrt::transformations::implementation
 	{
 		SetValue(m_step_frequency_property, winrt::box_value(value));
 		update_value(L"step_frequency", m_step_frequency, value);
+	}
+
+	bool scalar_slider::is_manipulating()
+	{
+		return winrt::unbox_value<bool>(GetValue(m_is_manipulating_property));
+	}
+
+	void scalar_slider::is_manipulating(bool value)
+	{
+		SetValue(m_is_manipulating_property, winrt::box_value(value));
+		update_value(L"is_manipulating", m_is_manipulating, value);
 	}
 }

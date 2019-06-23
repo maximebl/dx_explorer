@@ -15,9 +15,10 @@
         <local:xaml_helpers x:Key="helpers" />
     </Page.Resources>
 
-    <RelativePanel x:Name="main_panel" Width="auto" Height="auto">
+    <RelativePanel x:Name="main_panel" Width="auto" Height="auto" HorizontalAlignment="Stretch">
 
-        <MenuBar x:Name="main_menu" RelativePanel.AlignTopWithPanel="True" VerticalAlignment="Top">
+        <MenuBar x:Name="main_menu" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" 
+                 RelativePanel.AlignTopWithPanel="True" >
             <MenuBarItem Title="File">
                 <MenuFlyoutSubItem Text="New">
                     <MenuFlyoutItem Text="Plain Text Document"/>
@@ -56,43 +57,28 @@
                         RelativePanel.AlignBottomWith="bottom_menu"
                         RelativePanel.AlignRightWithPanel="True"
                         RelativePanel.AlignLeftWithPanel="True" />
-        <!--<Button Content="initialize app" Command="{x:Bind vm.initialize_app}" CommandParameter="{x:Bind vm.eye_position_x, Mode=OneWay}"/>-->
-        <StackPanel Orientation="Vertical" Canvas.ZIndex="1" HorizontalAlignment="Right" MinWidth="300" MaxWidth="500"
-            Background="{ThemeResource CustomAcrylicBrush}" BackgroundSizing="InnerBorderEdge" BorderThickness="1" BorderBrush="{ThemeResource SystemControlBackgroundAccentRevealBorderBrush}" 
-            RelativePanel.Below="main_menu" >
-            <StackPanel.ChildrenTransitions>
-                <EntranceThemeTransition IsStaggeringEnabled="True" />
-            </StackPanel.ChildrenTransitions>
 
-            <ScrollViewer Height="600" VerticalScrollBarVisibility="Auto" Padding="20">
-                <StackPanel>
-                    <local:fold_control HorizontalAlignment="Stretch" label="Transforms" Visibility="{x:Bind vm.transforms_options_visible, Mode=OneWay}">
-                        <local:fold_control.inner_content>
-                            <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
-                                <local:scalar_slider label="Scale X" scalar_value="{x:Bind vm.selected_mesh.scale.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
-                                <local:scalar_slider label="Scale Y" scalar_value="{x:Bind vm.selected_mesh.scale.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
-                                <local:scalar_slider label="Scale Z" scalar_value="{x:Bind vm.selected_mesh.scale.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1"/>
-                            </StackPanel>
-                        </local:fold_control.inner_content>
-                    </local:fold_control>
+        <ScrollViewer Height="auto" MaxHeight="{Binding ActualHeight, ElementName=swapchain_panel, Mode=OneWay}" VerticalScrollBarVisibility="Auto" 
+                  Width="300"
+                  VerticalContentAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  RelativePanel.Below="main_menu"
+                  RelativePanel.AlignLeftWithPanel="True">
 
-                    <local:fold_control HorizontalAlignment="Stretch" label="Model matrix" Visibility="{x:Bind vm.model_matrix_options_visible, Mode=OneWay}">
-                        <local:fold_control.inner_content>
-                            <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
-                                <local:scalar_slider label="Angle" scalar_value="{x:Bind vm.angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1"/>
-                                <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind vm.rotation_axis_x, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
-                                <local:scalar_slider label="Rotation axis Y" scalar_value="{x:Bind vm.rotation_axis_y, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
-                                <local:scalar_slider label="Rotation axis Z" scalar_value="{x:Bind vm.rotation_axis_z, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1"/>
-                            </StackPanel>
-                        </local:fold_control.inner_content>
-                    </local:fold_control>
+            <ListView x:Name="mvp_options" 
+                  SelectionMode="Single"
+                  HorizontalAlignment="Left"
+                  Background="{StaticResource CustomAcrylicBrush}"
+                  Width="250"
+                  HorizontalContentAlignment="Stretch" >
 
+                <ListViewItem HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0">
                     <local:fold_control HorizontalAlignment="Stretch" label="View matrix" Visibility="{x:Bind vm.view_matrix_options_visible, Mode=OneWay}">
                         <local:fold_control.inner_content>
-                            <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
+                            <StackPanel Orientation="Vertical" Padding="0,0,0,10" >
                                 <local:scalar_slider label="Eye position X" scalar_value="{x:Bind vm.eye_position_x, Mode=TwoWay}" scalar_min="-10" scalar_max="10" step_frequency="0.1"/>
-                                <local:scalar_slider label="Eye position Y" scalar_value="{x:Bind vm.eye_position_y, Mode=TwoWay}" scalar_min="-10" scalar_max="10" step_frequency="0.1"/>
-                                <local:scalar_slider label="Eye position Z" scalar_value="{x:Bind vm.eye_position_z, Mode=TwoWay}" scalar_min="-10" scalar_max="-1" step_frequency="0.1"/>
+                                <local:scalar_slider label="Eye position Y" scalar_value="{x:Bind vm.eye_position_y, Mode=TwoWay}" scalar_min="-10" scalar_max="10" step_frequency="0.1" />
+                                <local:scalar_slider label="Eye position Z" scalar_value="{x:Bind vm.eye_position_z, Mode=TwoWay}" scalar_min="-10" scalar_max="-1" step_frequency="0.1" />
                                 <RelativePanel>
                                     <TextBlock x:Name="up_direction_label" Text="Up direction" FontSize="12"/>
                                     <StackPanel RelativePanel.AlignHorizontalCenterWithPanel="True" Orientation="Horizontal" RelativePanel.Below="up_direction_label" >
@@ -113,17 +99,21 @@
                             </StackPanel>
                         </local:fold_control.inner_content>
                     </local:fold_control>
+                </ListViewItem>
 
+                <ListViewItem HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0">
                     <local:fold_control HorizontalAlignment="Stretch" label="Projection matrix" Visibility="{x:Bind vm.projection_matrix_options_visible, Mode=OneWay}">
                         <local:fold_control.inner_content>
-                            <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
+                            <StackPanel Orientation="Vertical" Padding="0,0,0,10" >
                                 <local:scalar_slider label="Field of view" scalar_value="{x:Bind vm.field_of_view, Mode=TwoWay}" scalar_min="1" scalar_max="120" step_frequency="1"/>
                                 <local:scalar_slider label="Near Z" scalar_value="{x:Bind vm.near_z, Mode=TwoWay}" scalar_min="0.1" scalar_max="10" step_frequency="0.1"/>
                                 <local:scalar_slider label="Far Z" scalar_value="{x:Bind vm.far_z, Mode=TwoWay}" scalar_min="0.1" scalar_max="300" step_frequency="0.1"/>
                             </StackPanel>
                         </local:fold_control.inner_content>
                     </local:fold_control>
+                </ListViewItem>
 
+                <ListViewItem HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0">
                     <local:fold_control HorizontalAlignment="Stretch" label="Viewport" Visibility="{x:Bind vm.viewport_options_visible,Mode=OneWay}">
                         <local:fold_control.inner_content>
                             <StackPanel Orientation="Vertical" Padding="0,0,0,0" >
@@ -134,12 +124,96 @@
                             </StackPanel>
                         </local:fold_control.inner_content>
                     </local:fold_control>
-                </StackPanel>
-            </ScrollViewer>
-        </StackPanel>
+                </ListViewItem>
+
+                <ListView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition />
+                        <RepositionThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </ListView.ItemContainerTransitions>
+
+                <ListView.Resources>
+                    <SolidColorBrush x:Key="ListViewItemBackground" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemRevealBackground" Color="Transparent"/>
+                </ListView.Resources>
+            </ListView>
+        </ScrollViewer>
+
+        <ScrollViewer Height="auto" MaxHeight="{Binding ActualHeight, ElementName=swapchain_panel, Mode=OneWay}" VerticalScrollBarVisibility="Auto" 
+                  Width="300"
+                  VerticalContentAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  RelativePanel.Below="main_menu"
+                  RelativePanel.AlignRightWithPanel="True">
+
+            <ListView x:Name="mesh_list" 
+                  SelectedItem="{x:Bind vm.selected_mesh, Mode=TwoWay}"
+                  SelectionMode="Extended"
+                  Canvas.ZIndex="2"
+                  HorizontalAlignment="Right"
+                  ItemsSource="{x:Bind vm.meshes}"
+                  Background="{StaticResource CustomAcrylicBrush}"
+                  Width="250"
+                  HorizontalContentAlignment="Stretch" >
+
+                <ListView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <AddDeleteThemeTransition />
+                        <RepositionThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </ListView.ItemContainerTransitions>
+
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="local:mesh_vm">
+                        <ListViewItem x:Name="current_item" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0" IsSelected="{x:Bind is_selected, Mode=TwoWay}">
+                            <local:fold_control label="{x:Bind mesh_type, Mode=OneWay}">
+                                <local:fold_control.inner_content>
+                                    <StackPanel Orientation="Vertical">
+                                        <StackPanel.ChildrenTransitions>
+                                            <RepositionThemeTransition/>
+                                            <EntranceThemeTransition IsStaggeringEnabled="True" />
+                                        </StackPanel.ChildrenTransitions>
+
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEBD2;"/>
+
+                                        <!--<Button Command="{Binding ElementName=mesh_list, Path=DataContext.cmd_delete_mesh}"/>-->
+
+                                        <local:scalar_slider label="Angle" scalar_value="{x:Bind angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}" />
+                                        <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind rotation_axis.x, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Rotation axis Y" scalar_value="{x:Bind rotation_axis.y, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Rotation axis Z" scalar_value="{x:Bind rotation_axis.z, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Scale X" scalar_value="{x:Bind scale.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Scale Y" scalar_value="{x:Bind scale.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Scale Z" scalar_value="{x:Bind scale.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Translation X" scalar_value="{x:Bind translation.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Translation Y" scalar_value="{x:Bind translation.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Translation Z" scalar_value="{x:Bind translation.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+
+                                    </StackPanel>
+                                </local:fold_control.inner_content>
+                            </local:fold_control>
+                        </ListViewItem>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+                <ListView.Resources>
+                    <SolidColorBrush x:Key="ListViewItemBackground" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemBackgroundPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="Transparent"/>
+                    <SolidColorBrush x:Key="ListViewItemRevealBackground" Color="Transparent"/>
+                </ListView.Resources>
+            </ListView>
+        </ScrollViewer>
 
         <AppBar x:Name="bottom_menu" IsOpen="True" IsSticky="True" ClosedDisplayMode="Minimal" Background="{StaticResource CustomAcrylicBrush}"
-BackgroundSizing="InnerBorderEdge" BorderThickness="8" BorderBrush="{ThemeResource SystemControlBackgroundAccentRevealBorderBrush}"  
+                BackgroundSizing="InnerBorderEdge" BorderThickness="8" BorderBrush="{ThemeResource SystemControlBackgroundAccentRevealBorderBrush}"  
                 RelativePanel.AlignBottomWithPanel="True" >
             <AppBarElementContainer>
                 <StackPanel Orientation="Horizontal" >

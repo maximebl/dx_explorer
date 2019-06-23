@@ -7,8 +7,14 @@ namespace transformations
 	{
 		mesh_vm();
 
-		//transformations.float3 scale;
-		//Single scale;
+		Windows.UI.Xaml.Input.StandardUICommand cmd_delete_mesh{ get; };
+
+		Boolean is_selected;
+		String mesh_type;
+		UInt32 index;
 		float3 scale;
+		float3 translation;
+		float3 rotation_axis;
+		Single angle;
 	}
 }

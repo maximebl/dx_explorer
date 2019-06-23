@@ -9,7 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <media:AcrylicBrush x:Key="CustomAcrylicBrush" BackgroundSource="Backdrop" TintOpacity="0.5" TintColor="#FF000000" FallbackColor="#FF008000" />
+            <media:AcrylicBrush x:Key="CustomAcrylicBrush" BackgroundSource="Backdrop" TintOpacity="0.85" TintColor="#FF000000" FallbackColor="#FF008000" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

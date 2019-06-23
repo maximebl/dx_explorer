@@ -188,6 +188,7 @@ void mvp_showcase_app::render()
 	m_graphics_cmdlist->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
 	m_graphics_cmdlist->SetPipelineState(m_pso.get());
+	m_graphics_cmdlist->SetGraphicsRootConstantBufferView(2, m_cbv_uploaded_resource->GetGPUVirtualAddress());
 
 	// draw the cubes
 	draw_render_items();
@@ -344,12 +345,13 @@ void mvp_showcase_app::draw_render_items()
 	{
 		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.index_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_INDEX_BUFFER);
 		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.vertex_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+		render_item& current_render_item = render_items[i];
 
-		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &render_items[i].mesh_geometry.vbv);
-		m_graphics_cmdlist->IASetIndexBuffer(&render_items[i].mesh_geometry.ibv);
+		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &current_render_item.mesh_geometry.vbv);
+		m_graphics_cmdlist->IASetIndexBuffer(&current_render_item.mesh_geometry.ibv);
 		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart());
-		m_graphics_cmdlist->DrawIndexedInstanced(render_items[i].mesh_geometry.index_count, 1, 0, 0, 0);
+		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, current_render_item.cbv_gpu_handle);
+		m_graphics_cmdlist->DrawIndexedInstanced(current_render_item.mesh_geometry.index_count, 1, 0, 0, 0);
 	}
 }
 
@@ -432,48 +434,47 @@ void mvp_showcase_app::update_mvp_matrix()
 
 void mvp_showcase_app::update_model_matrices()
 {
-	// model matrix
+	auto current_mesh = m_current_vm.selected_mesh();
+	if (current_mesh && render_items.size() > 0)
+	{
+		// model matrix
 #if defined(DEBUG) || defined(_DEBUG)  
-	bool axis_x = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_x());
-	bool axis_y = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_y());
-	bool axis_z = math_helpers::is_nearly_zero(m_current_vm.rotation_axis_z());
-	bool is_all_zeros = axis_x && axis_y && axis_z;
-	_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
+		bool axis_x = math_helpers::is_nearly_zero(current_mesh.rotation_axis().x());
+		bool axis_y = math_helpers::is_nearly_zero(current_mesh.rotation_axis().y());
+		bool axis_z = math_helpers::is_nearly_zero(current_mesh.rotation_axis().z());
+		bool is_all_zeros = axis_x && axis_y && axis_z;
+		_ASSERT_EXPR(!is_all_zeros, L"At least one rotation axis is required.");
 #endif
 
-	XMVECTOR rotation_axis = XMVectorSet(m_current_vm.rotation_axis_x(), m_current_vm.rotation_axis_y(), m_current_vm.rotation_axis_z(), 0);
-	XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(m_current_vm.angle()));
-	XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 0.0f, 0.f);
-	XMMATRIX scaling_matrix = XMMatrixScaling(m_current_vm.selected_mesh().scale().x(), m_current_vm.selected_mesh().scale().y(), m_current_vm.selected_mesh().scale().z());
+		XMVECTOR rotation_axis = XMVectorSet(current_mesh.rotation_axis().x(), current_mesh.rotation_axis().y(), current_mesh.rotation_axis().z(), 0);
+		XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(current_mesh.angle()));
+		XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
+		XMMATRIX scaling_matrix = XMMatrixScaling(current_mesh.scale().x(), current_mesh.scale().y(), current_mesh.scale().z());
 
-	m_model = rotation_matrix * translation_matrix * scaling_matrix;
-	XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
+		m_model = rotation_matrix * translation_matrix * scaling_matrix;
+		XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
 
-	//for (auto& render_item : render_items)
-	//{
-	int32_t current_index = m_current_vm.selected_mesh().as<transformations::implementation::mesh_vm>()->index;
+		//m_current_index = current_mesh.as<transformations::implementation::mesh_vm>()->index;
+		m_current_index = current_mesh.index();
 
-	if (render_items.size() > current_index)
-	{
-		if (render_items[current_index].constant_buffer_allocation.CPU != nullptr)
+		if (render_items.size() > m_current_index)
 		{
-			memcpy(reinterpret_cast<void*>(render_items[current_index].constant_buffer_allocation.CPU),
+			memcpy(reinterpret_cast<void*>(render_items[m_current_index].constant_buffer_allocation.CPU),
 				reinterpret_cast<void*>(&m_stored_model_matrix),
 				sizeof(model_cb));
 		}
 	}
-	//}
 }
 
 void mvp_showcase_app::create_root_signature()
 {
 	D3D12_DESCRIPTOR_RANGE cb_manips_ranges[1];
 	D3D12_DESCRIPTOR_RANGE sampler_ranges[1];
-	D3D12_ROOT_PARAMETER params[2];
+	D3D12_ROOT_PARAMETER params[3];
 
 	D3D12_DESCRIPTOR_RANGE descriptor_range_cb;
-	descriptor_range_cb.BaseShaderRegister = 0;
-	descriptor_range_cb.NumDescriptors = 2;
+	descriptor_range_cb.BaseShaderRegister = 1;
+	descriptor_range_cb.NumDescriptors = 1;
 	descriptor_range_cb.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;//indicates this range should immediately follow the preceding range.
 	descriptor_range_cb.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE::D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
 	descriptor_range_cb.RegisterSpace = 0;
@@ -507,6 +508,16 @@ void mvp_showcase_app::create_root_signature()
 	root_param_sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
 	root_param_sampler.DescriptorTable = sampler_table;
 	params[1] = root_param_sampler;
+
+	D3D12_ROOT_DESCRIPTOR view_proj_cb_root_descriptor;
+	view_proj_cb_root_descriptor.RegisterSpace = 0;
+	view_proj_cb_root_descriptor.ShaderRegister = 0;
+
+	D3D12_ROOT_PARAMETER cb_view_proj_param;
+	cb_view_proj_param.ParameterType = D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV;
+	cb_view_proj_param.ShaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
+	cb_view_proj_param.Descriptor = view_proj_cb_root_descriptor;
+	params[2] = cb_view_proj_param;
 
 	D3D12_ROOT_SIGNATURE_DESC rootsig_desc;
 	rootsig_desc.Flags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -582,9 +593,9 @@ void mvp_showcase_app::create_view_proj_cbv()
 	m_device_resources.device->CreateConstantBufferView(&cbv_desc, m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart());
 }
 
-void mvp_showcase_app::create_model_cbv()
+void mvp_showcase_app::create_model_cbv(render_item& render_item)
 {
-	render_item& render_item = render_items.back();
+	//render_item& render_item = render_items.back();
 
 	//create upload buffer
 	D3D12_HEAP_PROPERTIES upload_heap_props;
@@ -629,12 +640,19 @@ void mvp_showcase_app::create_model_cbv()
 	//Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
 	cbv_desc.SizeInBytes = (sizeof(model_cb) + 255) & ~255;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE handle = m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart();
-	// mvp_data takes the first index in the cbv descriptor table
+	// We don't have to do -1 on the size of render_items because
+	// the view-projection matrix data already takes the first index in the cbv descriptor table, so we start at index 1 
 	UINT heap_index = render_items.size();
-	handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
 
-	m_device_resources.device->CreateConstantBufferView(&cbv_desc, handle);
+	D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle = m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart();
+	cpu_handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
+	//render_item.cbv_cpu_handle = cpu_handle;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle = m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart();
+	gpu_handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
+	render_item.cbv_gpu_handle = gpu_handle;
+
+	m_device_resources.device->CreateConstantBufferView(&cbv_desc, cpu_handle);
 }
 
 void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
@@ -648,7 +666,7 @@ void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
 	check_hresult(m_device_resources.device->CreateDescriptorHeap(&srv_cbv_uav_heap_desc, guid_of<ID3D12DescriptorHeap>(), m_srv_cbv_uav_heap.put_void()));
 }
 
-void mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
+render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
 {
 	struct VertexPosColor
 	{
@@ -713,7 +731,7 @@ void mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
 
 	render_item cube_render_item;
 	cube_render_item.mesh_geometry = m_cube_mesh;
-	render_items.push_back(cube_render_item);
+	return cube_render_item;
 }
 
 void mvp_showcase_app::create_cube()
@@ -721,12 +739,11 @@ void mvp_showcase_app::create_cube()
 	check_hresult(ui_requests_cmd_allocator->Reset());
 	check_hresult(m_ui_requests_cmdlist->Reset(ui_requests_cmd_allocator.get(), nullptr));
 
-	create_simple_cube(m_ui_requests_cmdlist.get());
-	create_model_cbv();
+	render_item render_item = create_simple_cube(m_ui_requests_cmdlist.get());
+	create_model_cbv(render_item);
+	render_items.push_back(std::move(render_item));
 
 	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);
-
-	//m_cmd_queue->flush_cmd_queue();
 }
 
 void mvp_showcase_app::create_lighting_cube()

@@ -33,6 +33,12 @@ namespace winrt::transformations::implementation
 			add_simple_cube();
 			co_return;
 		});
+
+		m_cmd_delete_mesh.ExecuteRequested(
+			[this](XamlUICommand sender, ExecuteRequestedEventArgs args) -> IAsyncAction {
+			delete_mesh();
+			co_return;
+		});
 	}
 
 	transformations::mesh_vm mvp_viewmodel::selected_mesh()
@@ -42,10 +48,11 @@ namespace winrt::transformations::implementation
 
 	void mvp_viewmodel::selected_mesh(transformations::mesh_vm value)
 	{
+		m_selected_mesh = value;
 		update_value(L"selected_mesh", m_selected_mesh, value);
 	}
 
-	IObservableVector<transformations::mesh_vm> mvp_viewmodel::meshes()
+	IObservableVector<Windows::Foundation::IInspectable> mvp_viewmodel::meshes()
 	{
 		return m_meshes;
 	}
@@ -63,6 +70,11 @@ namespace winrt::transformations::implementation
 	Windows::UI::Xaml::Input::XamlUICommand mvp_viewmodel::cmd_add_simple_cube()
 	{
 		return m_cmd_add_simple_cube;
+	}
+
+	Windows::UI::Xaml::Input::XamlUICommand mvp_viewmodel::cmd_delete_mesh()
+	{
+		return m_cmd_delete_mesh;
 	}
 
 	Windows::UI::Xaml::Controls::SwapChainPanel mvp_viewmodel::current_swapchain_panel()
@@ -103,46 +115,6 @@ namespace winrt::transformations::implementation
 	void mvp_viewmodel::eye_position_z(float value)
 	{
 		update_value(L"eye_position_z", m_eye_position_z, value);
-	}
-
-	float mvp_viewmodel::angle()
-	{
-		return m_angle;
-	}
-
-	void mvp_viewmodel::angle(float value)
-	{
-		update_value(L"angle", m_angle, value);
-	}
-
-	float mvp_viewmodel::rotation_axis_x()
-	{
-		return m_rotation_axis_x;
-	}
-
-	void mvp_viewmodel::rotation_axis_x(float value)
-	{
-		update_value(L"rotation_axis_x", m_rotation_axis_x, value);
-	}
-
-	float mvp_viewmodel::rotation_axis_y()
-	{
-		return m_rotation_axis_y;
-	}
-
-	void mvp_viewmodel::rotation_axis_y(float value)
-	{
-		update_value(L"rotation_axis_y", m_rotation_axis_y, value);
-	}
-
-	float mvp_viewmodel::rotation_axis_z()
-	{
-		return m_rotation_axis_z;
-	}
-
-	void mvp_viewmodel::rotation_axis_z(float value)
-	{
-		update_value(L"rotation_axis_z", m_rotation_axis_z, value);
 	}
 
 	float mvp_viewmodel::viewport_width()
@@ -294,13 +266,21 @@ namespace winrt::transformations::implementation
 	IAsyncAction mvp_viewmodel::add_simple_cube()
 	{
 		transformations::mesh_vm new_mesh;
-		new_mesh.as<transformations::implementation::mesh_vm>()->index = meshes().Size();
-		selected_mesh(new_mesh.as<transformations::mesh_vm>());
-		meshes().Append(new_mesh);
+		new_mesh.mesh_type(L"Simple cube");
+		new_mesh.index(meshes().Size());
+		meshes().Append(box_value(new_mesh));
 
 		co_await winrt::resume_background();
 		m_app->create_cube();
+
+		co_await m_ui_thread;
+		selected_mesh(new_mesh);
 		co_return;
+	}
+
+	winrt::Windows::Foundation::IAsyncAction mvp_viewmodel::delete_mesh()
+	{
+		return winrt::Windows::Foundation::IAsyncAction();
 	}
 
 	IAsyncAction mvp_viewmodel::initialize()

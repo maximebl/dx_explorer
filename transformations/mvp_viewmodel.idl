@@ -16,11 +16,13 @@ namespace transformations
 		mvp_viewmodel();
 
 		mesh_vm selected_mesh;
-		IObservableVector<mesh_vm> meshes{ get; };
+		IObservableVector<IInspectable> meshes{ get; };
 
 		Windows.UI.Xaml.Input.XamlUICommand initialize_app{ get; };
 		Windows.UI.Xaml.Input.XamlUICommand cmd_add_lit_cube{ get; };
 		Windows.UI.Xaml.Input.XamlUICommand cmd_add_simple_cube{ get; };
+		Windows.UI.Xaml.Input.XamlUICommand cmd_delete_mesh{ get; };
+
 		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
 
 		Boolean model_matrix_options_visible;
@@ -34,11 +36,6 @@ namespace transformations
 		Single eye_position_z;
 		vector_selection up_direction;
 		vector_selection focus_point;
-
-		Single angle;
-		Single rotation_axis_x;
-		Single rotation_axis_y;
-		Single rotation_axis_z;
 
 		Single field_of_view;
 		Single near_z;

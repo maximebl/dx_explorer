@@ -10,8 +10,8 @@ namespace winrt::transformations::implementation
 {
 	model_view_projection::model_view_projection()
 	{
-		InitializeComponent();
 		DataContext(m_vm);
+		InitializeComponent();
 		m_vm.current_swapchain_panel(swapchain_panel());
 	}
 
@@ -22,6 +22,13 @@ namespace winrt::transformations::implementation
 
 	IAsyncAction model_view_projection::page_loaded(IInspectable const & sender, RoutedEventArgs const & args)
 	{
+		//winrt::Windows::UI::Xaml::ElementFactoryGetArgs argz;
+		//auto elems = mesh_list().ItemTemplate().GetElement(argz);
+		//auto a = elems.as<winrt::Windows::UI::Xaml::FrameworkElement>();
+		//auto name = a.Name();
+		//a.DataContext(m_vm);
+		//this->Bindings->Update();
+
 		m_vm.initialize_app().Execute(nullptr);
 		co_return;
 	}
@@ -35,6 +42,11 @@ namespace winrt::transformations::implementation
 		m_vm.scissor_rect_width(new_width);
 		m_vm.scissor_rect_height(new_height);
 		co_return;
+	}
+
+	winrt::Windows::Foundation::IAsyncAction model_view_projection::keydown(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & args)
+	{
+		return winrt::Windows::Foundation::IAsyncAction();
 	}
 
 	IAsyncAction model_view_projection::up_direction_checked(IInspectable const & sender, RoutedEventArgs const & args)

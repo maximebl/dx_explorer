@@ -22,13 +22,13 @@ public:
 
 	void create_root_signature();
 	void create_view_proj_cbv();
-	void create_model_cbv();
+	void create_model_cbv(render_item& render_item);
 	void create_srv_cbv_uav_heap(uint32_t descriptor_count);
 	void render();
 	void update();
 	void build_frame_resources();
 	void create_pso();
-	void create_simple_cube(ID3D12GraphicsCommandList4* cmd_list);
+	render_item create_simple_cube(ID3D12GraphicsCommandList4* cmd_list);
 	void create_cube();
 
 	void create_lighting_cube();
@@ -100,8 +100,8 @@ private:
 	HANDLE m_cmd_recording_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
 
+	int32_t m_current_index = 0;
 	std::vector<render_item> render_items;
-
 	std::byte* m_mvp_data;
 	
 	view_proj_cb m_stored_mvp;

@@ -210,7 +210,12 @@ void device_resources::resize_rtv(UINT width, UINT height)
 
 uint32_t device_resources::present()
 {
-	check_hresult(m_swapchain->Present(0, 0));
+	hresult hr = m_swapchain->Present(0, 0);
+	if (hr)
+	{
+		check_hresult(device->GetDeviceRemovedReason());
+		throw_hresult(hr);
+	}
 	return m_swapchain.as<IDXGISwapChain4>()->GetCurrentBackBufferIndex();
 }
 

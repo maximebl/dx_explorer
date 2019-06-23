@@ -17,6 +17,9 @@
         <Slider x:Name="scalar_slider" Orientation="Horizontal" StepFrequency="{x:Bind step_frequency}"
                 Value="{x:Bind scalar_value, Mode=TwoWay}" 
                 Minimum="{x:Bind scalar_min}" Maximum="{x:Bind scalar_max}" TickPlacement="None" IsTabStop="False"
+                ManipulationMode="TranslateRailsX"
+                ManipulationStarting="manip_starting"
+                ManipulationCompleted="manip_completed"
                 RelativePanel.Below="scalar_text"
                 RelativePanel.AlignLeftWithPanel="True"
                 RelativePanel.AlignRightWithPanel="True" />

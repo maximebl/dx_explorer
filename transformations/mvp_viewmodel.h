@@ -14,11 +14,12 @@ namespace winrt::transformations::implementation
 
 		transformations::mesh_vm selected_mesh();
 		void selected_mesh(transformations::mesh_vm value);
-		Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> meshes();
+		Windows::Foundation::Collections::IObservableVector<IInspectable> meshes();
 
 		Windows::UI::Xaml::Input::XamlUICommand initialize_app();
 		Windows::UI::Xaml::Input::XamlUICommand cmd_add_lit_cube();
 		Windows::UI::Xaml::Input::XamlUICommand cmd_add_simple_cube();
+		Windows::UI::Xaml::Input::XamlUICommand cmd_delete_mesh();
 
 		Windows::UI::Xaml::Controls::SwapChainPanel current_swapchain_panel();
 		void current_swapchain_panel(Windows::UI::Xaml::Controls::SwapChainPanel value);
@@ -33,15 +34,6 @@ namespace winrt::transformations::implementation
 		void up_direction(transformations::vector_selection value);
 		transformations::vector_selection focus_point();
 		void focus_point(transformations::vector_selection value);
-
-		float angle();
-		void angle(float value);
-		float rotation_axis_x();
-		void rotation_axis_x(float value);
-		float rotation_axis_y();
-		void rotation_axis_y(float value);
-		float rotation_axis_z();
-		void rotation_axis_z(float value);
 
 		float viewport_width();
 		void viewport_width(float value);
@@ -75,16 +67,19 @@ namespace winrt::transformations::implementation
 		winrt::apartment_context m_ui_thread;
 
 		transformations::mesh_vm m_selected_mesh = winrt::make<transformations::implementation::mesh_vm>();
-		Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> m_meshes = winrt::single_threaded_observable_vector<transformations::mesh_vm>();
+		//Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> m_meshes = winrt::single_threaded_observable_vector<transformations::mesh_vm>();
+		Windows::Foundation::Collections::IObservableVector<IInspectable> m_meshes = winrt::single_threaded_observable_vector<IInspectable>();
 		std::unique_ptr<mvp_showcase_app> m_app = nullptr;
 
 		Windows::UI::Xaml::Input::XamlUICommand m_initialize_app;
 		Windows::UI::Xaml::Input::XamlUICommand m_cmd_add_lit_cube;
 		Windows::UI::Xaml::Input::XamlUICommand m_cmd_add_simple_cube;
+		Windows::UI::Xaml::Input::XamlUICommand m_cmd_delete_mesh;
 
 		winrt::Windows::Foundation::IAsyncAction initialize();
 		winrt::Windows::Foundation::IAsyncAction add_lit_cube();
 		winrt::Windows::Foundation::IAsyncAction add_simple_cube();
+		winrt::Windows::Foundation::IAsyncAction delete_mesh();
 
 		hstring m_title;
 		Windows::UI::Xaml::Controls::SwapChainPanel m_current_swapchain_panel;
@@ -93,11 +88,6 @@ namespace winrt::transformations::implementation
 		float m_eye_position_y = 0.f;
 		float m_eye_position_z = -10.f;
 		transformations::vector_selection m_focus_point = transformations::vector_selection::w;
-
-		float m_angle = 0.0f;
-		float m_rotation_axis_x = 0.0f;
-		float m_rotation_axis_y = 1.0f;
-		float m_rotation_axis_z = 1.0f;
 
 		float m_viewport_width = 512;
 		float m_viewport_height = 512;
