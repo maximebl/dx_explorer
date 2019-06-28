@@ -340,7 +340,6 @@ void mvp_showcase_app::create_pso()
 
 void mvp_showcase_app::draw_render_items()
 {
-	// draw every render_item of every frame_resource
 	for (int i = 0; i < render_items.size(); ++i)
 	{
 		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.index_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_INDEX_BUFFER);

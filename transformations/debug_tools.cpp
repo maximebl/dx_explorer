@@ -29,6 +29,14 @@ void debug_tools::track_leaks_for_thread()
 	m_dxgi_debug->EnableLeakTrackingForThread();
 }
 
+void debug_tools::draw_debug_line(ID3D12GraphicsCommandList4* cmd_list, ID3D12Device5* device )
+{
+	// set pso
+	// set topology type
+	// create upload buffer (upload heap resource)
+	// map cpu pointer to vertex1 and vertex2
+}
+
 bool debug_tools::assert_resource_state(ID3D12Resource* resource, D3D12_RESOURCE_STATES state)
 {
 	return m_debug_cmd_list->AssertResourceState(resource, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, state);

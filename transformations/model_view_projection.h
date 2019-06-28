@@ -19,7 +19,6 @@ namespace winrt::transformations::implementation
 		winrt::Windows::Foundation::IAsyncAction focus_point_checked(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
 		winrt::Windows::Foundation::IAsyncAction page_loaded(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
 		winrt::Windows::Foundation::IAsyncAction page_size_changed(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
-		winrt::Windows::Foundation::IAsyncAction keydown(Windows::Foundation::IInspectable const& sender, Windows::UI::Xaml::RoutedEventArgs const& args);
 
 	private:
 		mvp_showcase_app m_app;

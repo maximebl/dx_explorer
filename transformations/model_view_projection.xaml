@@ -182,7 +182,7 @@
 
                                         <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xEBD2;"/>
 
-                                        <!--<Button Command="{Binding ElementName=mesh_list, Path=DataContext.cmd_delete_mesh}"/>-->
+                                        <!--<Button Command="{Binding ElementName=mesh_list, Path=DataContext.vm.cmd_delete_mesh, Mode=OneWay}"/>-->
 
                                         <local:scalar_slider label="Angle" scalar_value="{x:Bind angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}" />
                                         <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind rotation_axis.x, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>

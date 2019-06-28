@@ -44,11 +44,6 @@ namespace winrt::transformations::implementation
 		co_return;
 	}
 
-	winrt::Windows::Foundation::IAsyncAction model_view_projection::keydown(Windows::Foundation::IInspectable const & sender, Windows::UI::Xaml::RoutedEventArgs const & args)
-	{
-		return winrt::Windows::Foundation::IAsyncAction();
-	}
-
 	IAsyncAction model_view_projection::up_direction_checked(IInspectable const & sender, RoutedEventArgs const & args)
 	{
 		auto rb = sender.as<Windows::UI::Xaml::Controls::RadioButton>();
