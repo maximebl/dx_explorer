@@ -42,7 +42,7 @@ public:
 	uint32_t m_frame_resource_index = 0;
 	uint32_t m_current_backbuffer_index = 0;
 	const uint32_t frame_count = 3;
-	winrt::Windows::Foundation::IAsyncAction pick(float screen_x, float screen_y);
+	void pick(float screen_x, float screen_y);
 
 private:
 
@@ -50,12 +50,6 @@ private:
 	{
 		DirectX::XMFLOAT3 Position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		DirectX::XMFLOAT3 Color = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	};
-
-	struct view_proj_matrix
-	{
-		DirectX::XMMATRIX view;
-		DirectX::XMMATRIX projection;
 	};
 
 	struct view_proj_cb

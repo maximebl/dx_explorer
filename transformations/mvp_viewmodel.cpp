@@ -79,7 +79,8 @@ namespace winrt::transformations::implementation
 
 	IAsyncAction mvp_viewmodel::pick(float screen_x, float screen_y)
 	{
-		co_await m_app->pick(screen_x, screen_y);
+		co_await winrt::resume_background();
+		m_app->pick(screen_x, screen_y);
 	}
 
 	transformations::float3 mvp_viewmodel::clicked_viewport_position()

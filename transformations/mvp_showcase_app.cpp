@@ -118,7 +118,7 @@ void mvp_showcase_app::create_cmd_record_thread()
 	m_cmd_recording_thread_handle = CreateThread(nullptr, 0, &mvp_showcase_app::record_cmd_lists, (void*)this, 0, nullptr);
 }
 
-winrt::Windows::Foundation::IAsyncAction mvp_showcase_app::pick(float screen_x, float screen_y)
+void mvp_showcase_app::pick(float screen_x, float screen_y)
 {
 	// Picking ray in view space
 	auto p00 = m_stored_mvp.projection(0, 0);
@@ -133,15 +133,14 @@ winrt::Windows::Foundation::IAsyncAction mvp_showcase_app::pick(float screen_x, 
 	for (size_t i = 0; i < render_items.size(); ++i)
 	{
 		XMFLOAT4X4* model_world = &render_items[i].mesh_geometry.world_matrix;
-		XMMATRIX world_matrix = XMLoadFloat4x4(model_world);
+		XMMATRIX world_matrix = XMMatrixTranspose(XMLoadFloat4x4(model_world));
 		XMMATRIX inverted_world_matrix = XMMatrixInverse(&XMMatrixDeterminant(world_matrix), world_matrix);
 
 		// transform picking ray to view space of mesh
 		XMMATRIX tmp_view = XMLoadFloat4x4(&m_stored_mvp.view);
 		tmp_view = XMMatrixTranspose(tmp_view);
 
-		XMVECTOR view_determ = XMVectorSet(1.00000012f, 1.00000012f, 1.00000012f, 1.00000012f);
-		XMMATRIX inverted_view_matrix = XMMatrixInverse(&view_determ, tmp_view);
+		XMMATRIX inverted_view_matrix = XMMatrixInverse(&XMMatrixDeterminant(tmp_view), tmp_view);
 		XMMATRIX to_local = XMMatrixMultiply(inverted_view_matrix, inverted_world_matrix);
 
 		//Transforms the 3D vector normal by the given matrix.
@@ -151,7 +150,6 @@ winrt::Windows::Foundation::IAsyncAction mvp_showcase_app::pick(float screen_x, 
 		//Transforms the 3D vector by a given matrix, projecting the result back into w = 1
 		m_ray_origin = XMVector3TransformCoord(tmp_origin, to_local);
 	}
-	co_return;
 }
 
 DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
@@ -345,8 +343,8 @@ void mvp_showcase_app::draw_line(ID3D12GraphicsCommandList4* cmd_list, vertex_po
 	if (!line_data_uploaded)
 	{
 		line_ia_vertex_input = std::make_unique<upload_buffer<vertex_pos_color>>(
-			m_device_resources.device.get(), 
-			2, 
+			m_device_resources.device.get(),
+			2,
 			upload_buffer<vertex_pos_color>::buffer_type::constant_buffer);
 
 		line_data_uploaded = true;
@@ -429,12 +427,12 @@ void mvp_showcase_app::update_mvp_matrix()
 		break;
 	}
 
-	m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
-	//m_view = XMMatrixSet(
-	//	0.948683321f, -0.0589483120f, -0.310684890f, 0.0f, 
-	//	-3.72529030f, 0.982471883f, -0.186410919f, 0.0f, 
-	//	0.316227794f, 0.176844940f, 0.932054639f, 0.0f, 
-	//	0.0f, -0.982471704f, 16.2798882f, 1.0f);
+	//m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
+	m_view = XMMatrixSet(
+		0.948683321f, -0.0589483120f, -0.310684890f, 0.0f,
+		-3.72529030e-09, 0.982471883f, -0.186410919f, 0.0f,
+		0.316227794f, 0.176844940f, 0.932054639f, 0.0f,
+		-0.0f, -0.982471704f, 16.2798882f, 1.0f);
 
 	// projection matrix
 	float aspect_ratio = m_current_vm.viewport_width() / m_current_vm.viewport_height();
@@ -466,7 +464,8 @@ void mvp_showcase_app::update_model_matrices()
 
 		XMVECTOR rotation_axis = XMVectorSet(current_mesh.rotation_axis().x(), current_mesh.rotation_axis().y(), current_mesh.rotation_axis().z(), 0);
 		XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(current_mesh.angle()));
-		XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
+		//XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
+		XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 		XMMATRIX scaling_matrix = XMMatrixScaling(current_mesh.scale().x(), current_mesh.scale().y(), current_mesh.scale().z());
 
 		m_current_index = current_mesh.index();
