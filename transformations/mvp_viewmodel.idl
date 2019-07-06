@@ -1,5 +1,6 @@
 import "bindable_base.idl";
 import "mesh_vm.idl";
+import "float3.idl";
 
 namespace transformations
 {
@@ -22,6 +23,9 @@ namespace transformations
 		Windows.UI.Xaml.Input.XamlUICommand cmd_add_lit_cube{ get; };
 		Windows.UI.Xaml.Input.XamlUICommand cmd_add_simple_cube{ get; };
 		Windows.UI.Xaml.Input.XamlUICommand cmd_delete_mesh{ get; };
+
+		Windows.Foundation.IAsyncAction pick(Single screen_x, Single screen_y);
+		float3 clicked_viewport_position;
 
 		Windows.UI.Xaml.Controls.SwapChainPanel current_swapchain_panel;
 

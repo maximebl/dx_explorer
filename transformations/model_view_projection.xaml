@@ -53,6 +53,7 @@
             </MenuBarItem>
         </MenuBar>
         <SwapChainPanel x:Name="swapchain_panel" Canvas.ZIndex="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Height="auto" Width="auto" 
+                        PointerPressed="swapchainpanel_onclick"
                         RelativePanel.Below="main_menu" 
                         RelativePanel.AlignBottomWith="bottom_menu"
                         RelativePanel.AlignRightWithPanel="True"

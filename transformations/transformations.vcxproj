@@ -272,9 +272,6 @@
     </ClCompile>
     <ClCompile Include="system_info.cpp" />
     <ClCompile Include="ui_helpers.cpp" />
-    <ClCompile Include="upload_buffer.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="xaml_helpers.cpp">
       <DependentUpon>xaml_helpers.idl</DependentUpon>
       <SubType>Code</SubType>

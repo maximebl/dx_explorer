@@ -2,6 +2,7 @@
 #include "mvp_viewmodel.g.h"
 #include "bindable_base.h"
 #include "mesh_vm.h"
+#include "float3.h"
 
 class mvp_showcase_app;
 
@@ -20,6 +21,9 @@ namespace winrt::transformations::implementation
 		Windows::UI::Xaml::Input::XamlUICommand cmd_add_lit_cube();
 		Windows::UI::Xaml::Input::XamlUICommand cmd_add_simple_cube();
 		Windows::UI::Xaml::Input::XamlUICommand cmd_delete_mesh();
+		Windows::Foundation::IAsyncAction pick(float screen_x, float screen_y);
+		transformations::float3 clicked_viewport_position();
+        void clicked_viewport_position(transformations::float3 value);
 
 		Windows::UI::Xaml::Controls::SwapChainPanel current_swapchain_panel();
 		void current_swapchain_panel(Windows::UI::Xaml::Controls::SwapChainPanel value);
@@ -67,7 +71,6 @@ namespace winrt::transformations::implementation
 		winrt::apartment_context m_ui_thread;
 
 		transformations::mesh_vm m_selected_mesh = winrt::make<transformations::implementation::mesh_vm>();
-		//Windows::Foundation::Collections::IObservableVector<transformations::mesh_vm> m_meshes = winrt::single_threaded_observable_vector<transformations::mesh_vm>();
 		Windows::Foundation::Collections::IObservableVector<IInspectable> m_meshes = winrt::single_threaded_observable_vector<IInspectable>();
 		std::unique_ptr<mvp_showcase_app> m_app = nullptr;
 
@@ -104,6 +107,7 @@ namespace winrt::transformations::implementation
 		bool m_viewport_options_visible = true;
 		bool m_transforms_options_visible = true;
 
+		transformations::float3 m_clicked_viewport_pos = winrt::make<transformations::implementation::float3>(0.0f, 0.0f, 0.0f);
 		transformations::vector_selection m_up_direction = transformations::vector_selection::y;
 	};
 }

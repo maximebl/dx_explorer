@@ -18,13 +18,8 @@ mvp_showcase_app::~mvp_showcase_app()
 
 void mvp_showcase_app::compile_shaders()
 {
-	com_ptr<ID3DBlob> new_vertex_shader = nullptr;
-	hstring file_name = L"default_shader.hlsl";
-	hstring vs_shader_name = L"vs";
-	hstring ps_shader_name = L"ps";
-	auto shaders_folder = winrt::Windows::ApplicationModel::Package::Current().InstalledLocation().Path() + L"\\shaders\\";
-	m_shaders[vs_shader_name] = m_device_resources.compile_shader_from_file(shaders_folder + file_name, "VS", "vs_5_1");
-	m_shaders[ps_shader_name] = m_device_resources.compile_shader_from_file(shaders_folder + file_name, "PS", "ps_5_1");
+	m_shaders[L"vs"] = m_device_resources.default_shaders[L"vs"];
+	m_shaders[L"ps"] = m_device_resources.default_shaders[L"ps"];
 }
 
 void mvp_showcase_app::create_cmd_objects()
@@ -59,8 +54,8 @@ void mvp_showcase_app::create_cmd_objects()
 bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 {
 #if defined(_DEBUG)
-	debug_tools::enable_debug_layer(true);
-	debug_tools::track_leaks_for_thread();
+	m_device_resources.debug_tools.enable_debug_layer(debug_tools::debug_mode::enable_gpu_validation);
+	m_device_resources.debug_tools.track_leaks_for_thread();
 #endif
 
 	if (!XMVerifyCPUSupport())
@@ -85,6 +80,11 @@ bool mvp_showcase_app::initialize(transformations::mvp_viewmodel& vm)
 	if (adapter)
 	{
 		m_device_resources.create_device(adapter);
+
+		m_device_resources.compile_default_shaders();
+		m_device_resources.create_default_rootsig();
+		m_device_resources.create_line_pso();
+
 		build_frame_resources();
 		create_cmd_objects();
 		m_device_resources.create_dsv_heap();
@@ -118,7 +118,43 @@ void mvp_showcase_app::create_cmd_record_thread()
 	m_cmd_recording_thread_handle = CreateThread(nullptr, 0, &mvp_showcase_app::record_cmd_lists, (void*)this, 0, nullptr);
 }
 
-DWORD __stdcall mvp_showcase_app::record_cmd_lists(void * instance)
+winrt::Windows::Foundation::IAsyncAction mvp_showcase_app::pick(float screen_x, float screen_y)
+{
+	// Picking ray in view space
+	auto p00 = m_stored_mvp.projection(0, 0);
+	auto p11 = m_stored_mvp.projection(1, 1);
+
+	float view_x = (+2.0f * screen_x / m_current_vm.viewport_width() - 1.0f) / p00;
+	float view_y = (-2.0f * screen_y / m_current_vm.viewport_height() + 1.0f) / p11;
+
+	XMVECTOR tmp_origin = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR tmp_direction = XMVectorSet(view_x, view_y, 1.0f, 0.0f);
+
+	for (size_t i = 0; i < render_items.size(); ++i)
+	{
+		XMFLOAT4X4* model_world = &render_items[i].mesh_geometry.world_matrix;
+		XMMATRIX world_matrix = XMLoadFloat4x4(model_world);
+		XMMATRIX inverted_world_matrix = XMMatrixInverse(&XMMatrixDeterminant(world_matrix), world_matrix);
+
+		// transform picking ray to view space of mesh
+		XMMATRIX tmp_view = XMLoadFloat4x4(&m_stored_mvp.view);
+		tmp_view = XMMatrixTranspose(tmp_view);
+
+		XMVECTOR view_determ = XMVectorSet(1.00000012f, 1.00000012f, 1.00000012f, 1.00000012f);
+		XMMATRIX inverted_view_matrix = XMMatrixInverse(&view_determ, tmp_view);
+		XMMATRIX to_local = XMMatrixMultiply(inverted_view_matrix, inverted_world_matrix);
+
+		//Transforms the 3D vector normal by the given matrix.
+		tmp_direction = XMVector3TransformNormal(tmp_direction, to_local);
+		m_ray_direction = XMVector3Normalize(tmp_direction);
+
+		//Transforms the 3D vector by a given matrix, projecting the result back into w = 1
+		m_ray_origin = XMVector3TransformCoord(tmp_origin, to_local);
+	}
+	co_return;
+}
+
+DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
 {
 	return 0;
 }
@@ -155,7 +191,6 @@ void mvp_showcase_app::update()
 	}
 
 	update_scissor_rect();
-
 	update_mvp_matrix();
 
 	old_width = new_width;
@@ -193,6 +228,17 @@ void mvp_showcase_app::render()
 	// draw the cubes
 	draw_render_items();
 
+	vertex_pos_color v1;
+	vertex_pos_color v2;
+	XMStoreFloat3(&v1.Position, m_ray_origin);
+	XMStoreFloat3(&v1.Color, DirectX::Colors::Red);
+
+	XMStoreFloat3(&v2.Position, m_ray_direction);
+	XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
+
+	pick(m_current_vm.clicked_viewport_position().x(), m_current_vm.clicked_viewport_position().y());
+	draw_line(m_graphics_cmdlist.get(), v1, v2);
+
 	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PRESENT);
@@ -221,40 +267,6 @@ void mvp_showcase_app::build_frame_resources()
 
 void mvp_showcase_app::create_pso()
 {
-	D3D12_RENDER_TARGET_BLEND_DESC rt_blend_desc;
-	rt_blend_desc.BlendEnable = false;
-	rt_blend_desc.LogicOpEnable = false;
-	rt_blend_desc.SrcBlend = D3D12_BLEND::D3D12_BLEND_ONE;
-	rt_blend_desc.DestBlend = D3D12_BLEND::D3D12_BLEND_ZERO;
-	rt_blend_desc.BlendOp = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-	rt_blend_desc.SrcBlendAlpha = D3D12_BLEND::D3D12_BLEND_ONE;
-	rt_blend_desc.DestBlendAlpha = D3D12_BLEND::D3D12_BLEND_ZERO;
-	rt_blend_desc.BlendOpAlpha = D3D12_BLEND_OP::D3D12_BLEND_OP_ADD;
-	rt_blend_desc.LogicOp = D3D12_LOGIC_OP::D3D12_LOGIC_OP_NOOP;
-	rt_blend_desc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE::D3D12_COLOR_WRITE_ENABLE_ALL;
-
-	D3D12_BLEND_DESC blend_state = {};
-	blend_state.AlphaToCoverageEnable = false;
-	blend_state.IndependentBlendEnable = false; // only blend the first RTV
-	blend_state.RenderTarget[0] = rt_blend_desc;
-
-	//Depth-stencil-state structure that controls how depth-stencil testing is performed by the output-merger stage.
-	D3D12_DEPTH_STENCILOP_DESC depth_stencilop_desc;
-	depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
-	depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
-	depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
-	depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_ALWAYS;
-
-	D3D12_DEPTH_STENCIL_DESC depthstencil_desc;
-	depthstencil_desc.DepthEnable = true;
-	depthstencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL;
-	depthstencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
-	depthstencil_desc.FrontFace = depth_stencilop_desc;
-	depthstencil_desc.BackFace = depth_stencilop_desc;
-	depthstencil_desc.StencilEnable = false;
-	depthstencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-	depthstencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-
 	D3D12_INPUT_ELEMENT_DESC input_elements[2] = {};
 	D3D12_INPUT_ELEMENT_DESC positions_input_element;
 	positions_input_element.SemanticName = "POSITION";
@@ -276,37 +288,16 @@ void mvp_showcase_app::create_pso()
 	colors_input_element.InstanceDataStepRate = 0;
 	input_elements[1] = colors_input_element;
 
-	//D3D12_INPUT_ELEMENT_DESC input_layout[] = {
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//	{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	//};
-
 	D3D12_INPUT_LAYOUT_DESC input_layout;
 	input_layout.NumElements = 2;
 	input_layout.pInputElementDescs = input_elements;
 
-	D3D12_RASTERIZER_DESC rasterizer_desc;
-	rasterizer_desc.FillMode = D3D12_FILL_MODE::D3D12_FILL_MODE_SOLID;
-	rasterizer_desc.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE;
-	rasterizer_desc.FrontCounterClockwise = false;
-	rasterizer_desc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-	rasterizer_desc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-	rasterizer_desc.DepthClipEnable = false;
-	rasterizer_desc.MultisampleEnable = false;
-	rasterizer_desc.AntialiasedLineEnable = false;
-	rasterizer_desc.ForcedSampleCount = 0;
-	rasterizer_desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE::D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
 	pso_desc.InputLayout = input_layout;
-	//pso_desc.InputLayout = { input_layout, _countof(input_layout) };
 	pso_desc.pRootSignature = m_root_signature.get();
 	pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	//pso_desc.BlendState = blend_state;
-	//pso_desc.RasterizerState = rasterizer_desc;
-	//pso_desc.DepthStencilState = depthstencil_desc;
 	pso_desc.DSVFormat = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
 	pso_desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE::D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pso_desc.NumRenderTargets = 1;
@@ -329,12 +320,7 @@ void mvp_showcase_app::create_pso()
 
 	pso_desc.VS = vs_bytecode;
 	pso_desc.PS = ps_bytecode;
-	//pso_desc.DS
-	//pso_desc.HS
-	//pso_desc.GS
 
-	//pso_desc.StreamOutput
-	//pso_desc.CachedPSO
 	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&pso_desc, guid_of<ID3D12PipelineState>(), m_pso.put_void()));
 }
 
@@ -351,6 +337,34 @@ void mvp_showcase_app::draw_render_items()
 		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, current_render_item.cbv_gpu_handle);
 		m_graphics_cmdlist->DrawIndexedInstanced(current_render_item.mesh_geometry.index_count, 1, 0, 0, 0);
+	}
+}
+
+void mvp_showcase_app::draw_line(ID3D12GraphicsCommandList4* cmd_list, vertex_pos_color v1, vertex_pos_color v2)
+{
+	if (!line_data_uploaded)
+	{
+		line_ia_vertex_input = std::make_unique<upload_buffer<vertex_pos_color>>(
+			m_device_resources.device.get(), 
+			2, 
+			upload_buffer<vertex_pos_color>::buffer_type::constant_buffer);
+
+		line_data_uploaded = true;
+	}
+	else
+	{
+		line_ia_vertex_input->copy_data(0, v1);
+		line_ia_vertex_input->copy_data(1, v2);
+
+		line_vbv.BufferLocation = line_ia_vertex_input->upload_buffer_resource->GetGPUVirtualAddress();
+		line_vbv.StrideInBytes = line_ia_vertex_input->element_size;
+		line_vbv.SizeInBytes = line_ia_vertex_input->element_count * line_ia_vertex_input->element_size;
+
+		cmd_list->SetGraphicsRootSignature(m_device_resources.default_root_signature.get());
+		cmd_list->SetPipelineState(m_device_resources.default_psos[L"line"].get());
+		cmd_list->IASetVertexBuffers(0, 1, &line_vbv);
+		cmd_list->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+		cmd_list->DrawInstanced(2, 1, 0, 0);
 	}
 }
 
@@ -416,6 +430,11 @@ void mvp_showcase_app::update_mvp_matrix()
 	}
 
 	m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
+	//m_view = XMMatrixSet(
+	//	0.948683321f, -0.0589483120f, -0.310684890f, 0.0f, 
+	//	-3.72529030f, 0.982471883f, -0.186410919f, 0.0f, 
+	//	0.316227794f, 0.176844940f, 0.932054639f, 0.0f, 
+	//	0.0f, -0.982471704f, 16.2798882f, 1.0f);
 
 	// projection matrix
 	float aspect_ratio = m_current_vm.viewport_width() / m_current_vm.viewport_height();
@@ -450,16 +469,16 @@ void mvp_showcase_app::update_model_matrices()
 		XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
 		XMMATRIX scaling_matrix = XMMatrixScaling(current_mesh.scale().x(), current_mesh.scale().y(), current_mesh.scale().z());
 
-		m_model = rotation_matrix * translation_matrix * scaling_matrix;
-		XMStoreFloat4x4(&m_stored_model_matrix, XMMatrixTranspose(m_model));
-
-		//m_current_index = current_mesh.as<transformations::implementation::mesh_vm>()->index;
 		m_current_index = current_mesh.index();
+
+		m_model = rotation_matrix * translation_matrix * scaling_matrix;
+		XMFLOAT4X4* model_world_matrix = &render_items[m_current_index].mesh_geometry.world_matrix;
+		XMStoreFloat4x4(model_world_matrix, XMMatrixTranspose(m_model));
 
 		if (render_items.size() > m_current_index)
 		{
 			memcpy(reinterpret_cast<void*>(render_items[m_current_index].constant_buffer_allocation.CPU),
-				reinterpret_cast<void*>(&m_stored_model_matrix),
+				reinterpret_cast<void*>(model_world_matrix),
 				sizeof(model_cb));
 		}
 	}
@@ -667,13 +686,7 @@ void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
 
 render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd_list)
 {
-	struct VertexPosColor
-	{
-		XMFLOAT3 Position;
-		XMFLOAT3 Color;
-	};
-
-	static VertexPosColor g_Vertices[8] = {
+	static vertex_pos_color g_Vertices[8] = {
 		{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
 		{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) }, // 1
 		{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f, 1.0f, 0.0f) }, // 2
@@ -685,7 +698,7 @@ render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd
 	};
 
 	// vertex data
-	size_t buffer_byte_stride = sizeof(VertexPosColor);
+	size_t buffer_byte_stride = sizeof(vertex_pos_color);
 	size_t element_count = _countof(g_Vertices);
 	size_t buffer_byte_size = buffer_byte_stride * element_count;
 
@@ -693,7 +706,7 @@ render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd
 
 	auto vertices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), cmd_list,
+		cmd_list,
 		&vertices_buffer, g_Vertices,
 		m_cube_mesh.vertex_uploader.put(), m_cube_mesh.vertex_default.put(), L"vertex_buffer");
 
@@ -719,7 +732,7 @@ render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd
 
 	auto indices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), cmd_list,
+		cmd_list,
 		&indices_buffer, g_Indicies,
 		m_cube_mesh.index_uploader.put(), m_cube_mesh.index_default.put(), L"index_buffer");
 
@@ -758,7 +771,7 @@ void mvp_showcase_app::create_lighting_cube()
 
 	mesh m_lighting_cube_mesh;
 	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), m_graphics_cmdlist.get(),
+		m_graphics_cmdlist.get(),
 		&vertices_buffer, lighting_cube.Vertices.data(),
 		m_lighting_cube_mesh.vertex_uploader.put(), m_lighting_cube_mesh.vertex_default.put(), L"lit_cube_vertex_buffer");
 
@@ -773,7 +786,7 @@ void mvp_showcase_app::create_lighting_cube()
 	auto indices_buffer = CD3DX12_RESOURCE_DESC::Buffer(buffer_byte_size);
 
 	m_device_resources.create_default_buffer(
-		m_device_resources.device.get(), m_graphics_cmdlist.get(),
+		m_graphics_cmdlist.get(),
 		&indices_buffer, lighting_cube.Indices32.data(),
 		m_lighting_cube_mesh.index_uploader.put(), m_lighting_cube_mesh.index_default.put(), L"lit_cube_index_buffer");
 

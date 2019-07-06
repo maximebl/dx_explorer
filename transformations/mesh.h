@@ -8,7 +8,7 @@ public:
 	~mesh();
 
 	std::string name = "";
-	// constant buffer data
+	DirectX::XMFLOAT4X4 world_matrix;
 
 	// vertex data
 	winrt::com_ptr<ID3D12Resource> vertex_uploader = nullptr;

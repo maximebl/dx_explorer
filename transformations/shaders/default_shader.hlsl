@@ -36,16 +36,20 @@ VertexShaderOutput VS(VertexPosColor IN)
 {
     VertexShaderOutput OUT;
 
-    // combined world (model), view, projection matrices used to transform a point from local space to homogeneous clip space
-    //OUT.Position = mul(VP, float4(IN.Position, 1.0f));
-    //OUT.Color = float4(IN.Color, 1.0f);
-
     matrix mvp = mul(mul(Model, View), Projection);
     OUT.Position = mul(float4(IN.Position, 1.0f), mvp);
 
-    //float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
-    //vout.PosH = mul(posW, gViewProj);
     OUT.Color = float4(IN.Color, 1.0f);
+    return OUT;
+}
+
+VertexShaderOutput VS_NoProj(VertexPosColor IN)
+{
+    VertexShaderOutput OUT;
+
+    OUT.Position = float4(IN.Position, 1.0f);
+    OUT.Color = float4(IN.Color, 1.0f);
+
     return OUT;
 }
 

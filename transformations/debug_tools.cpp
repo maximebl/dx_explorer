@@ -3,38 +3,29 @@
 
 using namespace winrt;
 
-winrt::com_ptr<ID3D12Debug1> debug_tools::m_debug_controller = nullptr;
-winrt::com_ptr<ID3D12DebugCommandList2> debug_tools::m_debug_cmd_list = nullptr;
-winrt::com_ptr<IDXGIDebug1> debug_tools::m_dxgi_debug = nullptr;
-
 debug_tools::debug_tools()
 {
 }
-
 
 debug_tools::~debug_tools()
 {
 }
 
-void debug_tools::enable_debug_layer(bool is_gpu_validation_enabled)
+void debug_tools::enable_debug_layer(debug_mode mode)
 {
 	check_hresult(D3D12GetDebugInterface(winrt::guid_of<ID3D12Debug1>(), m_debug_controller.put_void()));
 	check_hresult(DXGIGetDebugInterface1(0, guid_of<IDXGIDebug1>(), m_dxgi_debug.put_void()));
 	m_debug_controller->EnableDebugLayer();
-	m_debug_controller->SetEnableGPUBasedValidation(is_gpu_validation_enabled);
+
+	if (mode == debug_mode::enable_gpu_validation)
+	{
+		m_debug_controller->SetEnableGPUBasedValidation(true);
+	}
 }
 
 void debug_tools::track_leaks_for_thread()
 {
 	m_dxgi_debug->EnableLeakTrackingForThread();
-}
-
-void debug_tools::draw_debug_line(ID3D12GraphicsCommandList4* cmd_list, ID3D12Device5* device )
-{
-	// set pso
-	// set topology type
-	// create upload buffer (upload heap resource)
-	// map cpu pointer to vertex1 and vertex2
 }
 
 bool debug_tools::assert_resource_state(ID3D12Resource* resource, D3D12_RESOURCE_STATES state)

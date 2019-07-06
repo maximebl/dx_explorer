@@ -77,9 +77,6 @@
     <ClCompile Include="..\external_libs\GeometryGenerator.cpp">
       <Filter>external_libs</Filter>
     </ClCompile>
-    <ClCompile Include="upload_buffer.cpp">
-      <Filter>graphics</Filter>
-    </ClCompile>
     <ClCompile Include="mesh.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
@@ -90,12 +87,12 @@
       <Filter>utilities</Filter>
     </ClCompile>
     <ClCompile Include="float_to_double.cpp" />
-    <ClCompile Include="fold_panel.cpp" />
     <ClCompile Include="not_zero.cpp" />
     <ClCompile Include="xaml_helpers.cpp" />
     <ClCompile Include="fold_control.cpp" />
     <ClCompile Include="render_item.cpp" />
     <ClCompile Include="mesh_vm.cpp" />
+    <ClCompile Include="float3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -141,12 +138,12 @@
       <Filter>utilities</Filter>
     </ClInclude>
     <ClInclude Include="float_to_double.h" />
-    <ClInclude Include="fold_panel.h" />
     <ClInclude Include="not_zero.h" />
     <ClInclude Include="xaml_helpers.h" />
     <ClInclude Include="fold_control.h" />
     <ClInclude Include="render_item.h" />
     <ClInclude Include="mesh_vm.h" />
+    <ClInclude Include="float3.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Wide310x150Logo.scale-200.png">

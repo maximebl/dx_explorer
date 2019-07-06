@@ -1,5 +1,4 @@
 #pragma once
-#include "debug_tools.h"
 #include "system_info.h"
 #include "device_resources.h"
 #include "cmd_queue.h"
@@ -9,6 +8,8 @@
 #include "winrt/transformations.h"
 #include "mvp_viewmodel.h"
 #include "render_item.h"
+#include "upload_buffer.h"
+#include <memory>
 
 class mvp_showcase_app
 {
@@ -41,8 +42,15 @@ public:
 	uint32_t m_frame_resource_index = 0;
 	uint32_t m_current_backbuffer_index = 0;
 	const uint32_t frame_count = 3;
+	winrt::Windows::Foundation::IAsyncAction pick(float screen_x, float screen_y);
 
 private:
+
+	struct vertex_pos_color
+	{
+		DirectX::XMFLOAT3 Position = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		DirectX::XMFLOAT3 Color = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	};
 
 	struct view_proj_matrix
 	{
@@ -76,6 +84,7 @@ private:
 	void compile_shaders();
 	void create_cmd_objects();
 	void draw_render_items();
+	void draw_line(ID3D12GraphicsCommandList4* cmd_list, vertex_pos_color v1, vertex_pos_color v2);
 
 	void update_viewport();
 	void update_scissor_rect();
@@ -103,11 +112,23 @@ private:
 	int32_t m_current_index = 0;
 	std::vector<render_item> render_items;
 	std::byte* m_mvp_data;
-	
+
 	view_proj_cb m_stored_mvp;
 	DirectX::XMFLOAT4X4 m_stored_model_matrix;
-    DirectX::XMMATRIX m_model;
-    DirectX::XMMATRIX m_view;
-    DirectX::XMMATRIX m_projection;
+	DirectX::XMMATRIX m_model;
+	DirectX::XMMATRIX m_view;
+	DirectX::XMMATRIX m_projection;
+
+	std::unique_ptr< upload_buffer<vertex_pos_color>> line_ia_vertex_input = nullptr;
+	DirectX::XMVECTOR m_ray_origin;
+	DirectX::XMVECTOR m_ray_direction;
+	bool line_data_uploaded = false;
+	//com_ptr<ID3D12Resource> line_vertex_uploader;
+	//vertex_pos_color mapped_vertices[2];
+	//size_t line_stride = 0;
+	//size_t line_element_count = 0;
+	//size_t line_buffer_byte_size = 0;
+	//CD3DX12_RESOURCE_DESC line_vertex_buffer_desc;
+	D3D12_VERTEX_BUFFER_VIEW line_vbv;
 };
 

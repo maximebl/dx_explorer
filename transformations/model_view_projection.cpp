@@ -22,13 +22,6 @@ namespace winrt::transformations::implementation
 
 	IAsyncAction model_view_projection::page_loaded(IInspectable const & sender, RoutedEventArgs const & args)
 	{
-		//winrt::Windows::UI::Xaml::ElementFactoryGetArgs argz;
-		//auto elems = mesh_list().ItemTemplate().GetElement(argz);
-		//auto a = elems.as<winrt::Windows::UI::Xaml::FrameworkElement>();
-		//auto name = a.Name();
-		//a.DataContext(m_vm);
-		//this->Bindings->Update();
-
 		m_vm.initialize_app().Execute(nullptr);
 		co_return;
 	}
@@ -41,6 +34,13 @@ namespace winrt::transformations::implementation
 		m_vm.viewport_height(new_height);
 		m_vm.scissor_rect_width(new_width);
 		m_vm.scissor_rect_height(new_height);
+		co_return;
+	}
+
+	IAsyncAction model_view_projection::swapchainpanel_onclick(IInspectable const & sender, Input::PointerRoutedEventArgs const & args)
+	{
+		winrt::Windows::Foundation::Point position = args.GetCurrentPoint(sender.as<Controls::SwapChainPanel>()).Position();
+		co_await m_vm.pick(position.X, position.Y);
 		co_return;
 	}
 

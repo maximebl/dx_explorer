@@ -77,6 +77,21 @@ namespace winrt::transformations::implementation
 		return m_cmd_delete_mesh;
 	}
 
+	IAsyncAction mvp_viewmodel::pick(float screen_x, float screen_y)
+	{
+		co_await m_app->pick(screen_x, screen_y);
+	}
+
+	transformations::float3 mvp_viewmodel::clicked_viewport_position()
+	{
+		return m_clicked_viewport_pos;
+	}
+
+	void mvp_viewmodel::clicked_viewport_position(transformations::float3 value)
+	{
+		update_value(L"clicked_viewport_position", m_clicked_viewport_pos, value);
+	}
+
 	Windows::UI::Xaml::Controls::SwapChainPanel mvp_viewmodel::current_swapchain_panel()
 	{
 		return m_current_swapchain_panel;
