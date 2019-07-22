@@ -24,6 +24,7 @@ public:
 	void create_root_signature();
 	void create_view_proj_cbv();
 	void create_model_cbv(render_item& render_item);
+	void create_srt_cbv(render_item& render_item);
 	void create_srv_cbv_uav_heap(uint32_t descriptor_count);
 	void render();
 	void update();
@@ -63,6 +64,13 @@ private:
 		DirectX::XMFLOAT4X4 model;
 	};
 
+	struct srt_cb
+	{
+		DirectX::XMFLOAT4X4 scaling;
+		DirectX::XMFLOAT4X4 rotation;
+		DirectX::XMFLOAT4X4 translation;
+	};
+
 	transformations::mvp_viewmodel m_current_vm;
 
 	D3D12_VIEWPORT m_viewport;
@@ -78,6 +86,7 @@ private:
 	void compile_shaders();
 	void create_cmd_objects();
 	void draw_render_items();
+	void draw_selection_outline();
 	void draw_line(ID3D12GraphicsCommandList4* cmd_list, vertex_pos_color v1, vertex_pos_color v2);
 
 	void update_viewport();
@@ -97,18 +106,22 @@ private:
 
 	winrt::com_ptr<ID3D12RootSignature> m_root_signature = nullptr;
 	winrt::com_ptr<ID3D12DescriptorHeap> m_srv_cbv_uav_heap = nullptr;
-	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource = nullptr;
+	winrt::com_ptr<ID3D12Resource> m_viewproj_uploaded_resource = nullptr;
 	winrt::com_ptr<ID3D12PipelineState> m_pso = nullptr;
+	winrt::com_ptr<ID3D12PipelineState> m_outline_pso = nullptr;
 	HANDLE m_render_thread_handle;
 	HANDLE m_cmd_recording_thread_handle;
 	std::unordered_map<winrt::hstring, winrt::com_ptr<ID3DBlob>> m_shaders;
 
 	int32_t m_current_index = 0;
 	std::vector<render_item> render_items;
+	render_item* selected_ri = nullptr;
+	render_item outline_ri;
 	std::byte* m_mvp_data;
+	//std::byte* m_srt_data;
 
 	view_proj_cb m_stored_mvp;
-	DirectX::XMFLOAT4X4 m_stored_model_matrix;
+	srt_cb m_stored_srt;
 	DirectX::XMMATRIX m_model;
 	DirectX::XMMATRIX m_view;
 	DirectX::XMMATRIX m_projection;
@@ -116,13 +129,8 @@ private:
 	std::unique_ptr< upload_buffer<vertex_pos_color>> line_ia_vertex_input = nullptr;
 	DirectX::XMVECTOR m_ray_origin;
 	DirectX::XMVECTOR m_ray_direction;
+	DirectX::XMVECTOR m_point;
 	bool line_data_uploaded = false;
-	//com_ptr<ID3D12Resource> line_vertex_uploader;
-	//vertex_pos_color mapped_vertices[2];
-	//size_t line_stride = 0;
-	//size_t line_element_count = 0;
-	//size_t line_buffer_byte_size = 0;
-	//CD3DX12_RESOURCE_DESC line_vertex_buffer_desc;
 	D3D12_VERTEX_BUFFER_VIEW line_vbv;
 };
 

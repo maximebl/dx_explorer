@@ -172,7 +172,8 @@
 
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:mesh_vm">
-                        <ListViewItem x:Name="current_item" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0" IsSelected="{x:Bind is_selected, Mode=TwoWay}">
+                        <!--<ListViewItem x:Name="current_item" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0" IsSelected="{x:Bind is_selected, Mode=TwoWay}">-->
+                        <ListViewItem x:Name="current_item" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" MinHeight="0">
                             <local:fold_control label="{x:Bind mesh_type, Mode=OneWay}">
                                 <local:fold_control.inner_content>
                                     <StackPanel Orientation="Vertical">
@@ -185,7 +186,7 @@
 
                                         <!--<Button Command="{Binding ElementName=mesh_list, Path=DataContext.vm.cmd_delete_mesh, Mode=OneWay}"/>-->
 
-                                        <local:scalar_slider label="Angle" scalar_value="{x:Bind angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}" />
+                                        <!--<local:scalar_slider label="Angle" scalar_value="{x:Bind angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}" />
                                         <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind rotation_axis.x, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
                                         <local:scalar_slider label="Rotation axis Y" scalar_value="{x:Bind rotation_axis.y, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
                                         <local:scalar_slider label="Rotation axis Z" scalar_value="{x:Bind rotation_axis.z, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
@@ -194,7 +195,18 @@
                                         <local:scalar_slider label="Scale Z" scalar_value="{x:Bind scale.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
                                         <local:scalar_slider label="Translation X" scalar_value="{x:Bind translation.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
                                         <local:scalar_slider label="Translation Y" scalar_value="{x:Bind translation.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
-                                        <local:scalar_slider label="Translation Z" scalar_value="{x:Bind translation.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>
+                                        <local:scalar_slider label="Translation Z" scalar_value="{x:Bind translation.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" is_manipulating="{x:Bind is_selected, Mode=TwoWay}"/>-->
+
+                                        <local:scalar_slider label="Angle" scalar_value="{x:Bind angle, Mode=TwoWay}" scalar_min="-360" scalar_max="360" step_frequency="1" />
+                                        <local:scalar_slider label="Rotation axis X" scalar_value="{x:Bind rotation_axis.x, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" />
+                                        <local:scalar_slider label="Rotation axis Y" scalar_value="{x:Bind rotation_axis.y, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" />
+                                        <local:scalar_slider label="Rotation axis Z" scalar_value="{x:Bind rotation_axis.z, Converter={StaticResource not_zero_converter}, Mode=TwoWay}" scalar_min="-1" scalar_max="1" step_frequency="0.1" />
+                                        <local:scalar_slider label="Scale X" scalar_value="{x:Bind scale.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
+                                        <local:scalar_slider label="Scale Y" scalar_value="{x:Bind scale.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
+                                        <local:scalar_slider label="Scale Z" scalar_value="{x:Bind scale.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
+                                        <local:scalar_slider label="Translation X" scalar_value="{x:Bind translation.x, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
+                                        <local:scalar_slider label="Translation Y" scalar_value="{x:Bind translation.y, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
+                                        <local:scalar_slider label="Translation Z" scalar_value="{x:Bind translation.z, Mode=TwoWay}" scalar_min="0" scalar_max="20" step_frequency="0.1" />
 
                                     </StackPanel>
                                 </local:fold_control.inner_content>

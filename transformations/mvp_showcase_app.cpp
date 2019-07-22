@@ -20,6 +20,8 @@ void mvp_showcase_app::compile_shaders()
 {
 	m_shaders[L"vs"] = m_device_resources.default_shaders[L"vs"];
 	m_shaders[L"ps"] = m_device_resources.default_shaders[L"ps"];
+	m_shaders[L"vs_outline"] = m_device_resources.default_shaders[L"vs_outline"];
+	m_shaders[L"ps_outline"] = m_device_resources.default_shaders[L"ps_outline"];
 }
 
 void mvp_showcase_app::create_cmd_objects()
@@ -149,7 +151,24 @@ void mvp_showcase_app::pick(float screen_x, float screen_y)
 
 		//Transforms the 3D vector by a given matrix, projecting the result back into w = 1
 		m_ray_origin = XMVector3TransformCoord(tmp_origin, to_local);
+
+		float dist_from_hit = 0.0f;
+		if (render_items[i].bounding_box.Intersects(m_ray_origin, m_ray_direction, dist_from_hit))
+		{
+			m_current_vm.selected_mesh(unbox_value<transformations::mesh_vm>(m_current_vm.meshes().GetAt(i)));
+			selected_ri = &render_items[i];
+		}
 	}
+
+	//auto p00 = m_stored_mvp.projection(0, 0);
+	//auto p11 = m_stored_mvp.projection(1, 1);
+
+	//float view_x = (+2.0f * screen_x / m_current_vm.viewport_width() - 1.0f) / p00;
+	//float view_y = (-2.0f * screen_y / m_current_vm.viewport_height() + 1.0f) / p11;
+	//// v1
+	//m_ray_origin = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	//// v2
+	//m_ray_direction = XMVectorSet(view_x, view_y, 0.0f, 0.0f);
 }
 
 DWORD __stdcall mvp_showcase_app::record_cmd_lists(void* instance)
@@ -220,22 +239,30 @@ void mvp_showcase_app::render()
 	std::array<ID3D12DescriptorHeap*, 2> descriptor_heaps = { m_srv_cbv_uav_heap.get(), m_device_resources.sampler_heap.get() };
 	m_graphics_cmdlist->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
+	m_graphics_cmdlist->OMSetStencilRef(1);
 	m_graphics_cmdlist->SetPipelineState(m_pso.get());
-	m_graphics_cmdlist->SetGraphicsRootConstantBufferView(2, m_cbv_uploaded_resource->GetGPUVirtualAddress());
+	m_graphics_cmdlist->SetGraphicsRootConstantBufferView(2, m_viewproj_uploaded_resource->GetGPUVirtualAddress());
 
 	// draw the cubes
 	draw_render_items();
+	draw_selection_outline();
 
 	vertex_pos_color v1;
 	vertex_pos_color v2;
+	//XMStoreFloat3(&v1.Position, m_ray_origin);
+	//XMStoreFloat3(&v1.Color, DirectX::Colors::Red);
+
+	//XMStoreFloat3(&v2.Position, m_ray_direction);
+	//XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
+
 	XMStoreFloat3(&v1.Position, m_ray_origin);
-	XMStoreFloat3(&v1.Color, DirectX::Colors::Red);
+	XMStoreFloat3(&v1.Color, DirectX::Colors::Blue);
 
 	XMStoreFloat3(&v2.Position, m_ray_direction);
 	XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
 
-	pick(m_current_vm.clicked_viewport_position().x(), m_current_vm.clicked_viewport_position().y());
-	draw_line(m_graphics_cmdlist.get(), v1, v2);
+	//pick(m_current_vm.clicked_viewport_position().x(), m_current_vm.clicked_viewport_position().y());
+	//draw_line(m_graphics_cmdlist.get(), v1, v2);
 
 	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -265,6 +292,7 @@ void mvp_showcase_app::build_frame_resources()
 
 void mvp_showcase_app::create_pso()
 {
+	// opaque pso
 	D3D12_INPUT_ELEMENT_DESC input_elements[2] = {};
 	D3D12_INPUT_ELEMENT_DESC positions_input_element;
 	positions_input_element.SemanticName = "POSITION";
@@ -296,7 +324,7 @@ void mvp_showcase_app::create_pso()
 	pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	pso_desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	pso_desc.DSVFormat = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+	pso_desc.DSVFormat = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
 	pso_desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE::D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pso_desc.NumRenderTargets = 1;
 	pso_desc.RTVFormats[0] = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -307,7 +335,6 @@ void mvp_showcase_app::create_pso()
 	pso_desc.SampleDesc.Quality = 0;
 	pso_desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	//shaders
 	D3D12_SHADER_BYTECODE vs_bytecode;
 	vs_bytecode.BytecodeLength = m_shaders[L"vs"]->GetBufferSize();
 	vs_bytecode.pShaderBytecode = m_shaders[L"vs"]->GetBufferPointer();
@@ -319,7 +346,69 @@ void mvp_showcase_app::create_pso()
 	pso_desc.VS = vs_bytecode;
 	pso_desc.PS = ps_bytecode;
 
+	D3D12_DEPTH_STENCIL_DESC pso_depth_stencil_desc;
+
+	pso_depth_stencil_desc.DepthEnable = true;
+	pso_depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
+	pso_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
+	pso_depth_stencil_desc.StencilEnable = true;
+	pso_depth_stencil_desc.StencilReadMask = 0xff;
+	pso_depth_stencil_desc.StencilWriteMask = 0xff;
+
+	D3D12_DEPTH_STENCILOP_DESC depth_stencilop_desc;
+	depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_REPLACE;
+	depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_ALWAYS;
+	pso_depth_stencil_desc.BackFace = depth_stencilop_desc;
+
+	depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_REPLACE;
+	depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_ALWAYS;
+	pso_depth_stencil_desc.FrontFace = depth_stencilop_desc;
+
+	pso_desc.DepthStencilState = pso_depth_stencil_desc;
+
 	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&pso_desc, guid_of<ID3D12PipelineState>(), m_pso.put_void()));
+
+	// outline PSO
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC outline_pso_desc = pso_desc;
+	D3D12_DEPTH_STENCIL_DESC outline_depth_stencil_desc;
+	outline_depth_stencil_desc.DepthEnable = true;
+	outline_depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
+	outline_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
+	outline_depth_stencil_desc.StencilEnable = true;
+	outline_depth_stencil_desc.StencilReadMask = 0xff;
+	outline_depth_stencil_desc.StencilWriteMask = 0xff;
+
+	D3D12_DEPTH_STENCILOP_DESC outline_depth_stencilop_desc;
+	outline_depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_NOT_EQUAL;
+	outline_depth_stencil_desc.BackFace = outline_depth_stencilop_desc;
+
+	outline_depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	outline_depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_NOT_EQUAL;
+	outline_depth_stencil_desc.FrontFace = outline_depth_stencilop_desc;
+
+	outline_pso_desc.DepthStencilState = outline_depth_stencil_desc;
+
+	D3D12_SHADER_BYTECODE outline_vs_bytecode;
+	outline_vs_bytecode.BytecodeLength = m_shaders[L"vs_outline"]->GetBufferSize();
+	outline_vs_bytecode.pShaderBytecode = m_shaders[L"vs_outline"]->GetBufferPointer();
+
+	D3D12_SHADER_BYTECODE outline_ps_bytecode;
+	outline_ps_bytecode.BytecodeLength = m_shaders[L"ps_outline"]->GetBufferSize();
+	outline_ps_bytecode.pShaderBytecode = m_shaders[L"ps_outline"]->GetBufferPointer();
+
+	outline_pso_desc.VS = outline_vs_bytecode;
+	outline_pso_desc.PS = outline_ps_bytecode;
+
+	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&outline_pso_desc, guid_of<ID3D12PipelineState>(), m_outline_pso.put_void()));
 }
 
 void mvp_showcase_app::draw_render_items()
@@ -335,6 +424,25 @@ void mvp_showcase_app::draw_render_items()
 		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, current_render_item.cbv_gpu_handle);
 		m_graphics_cmdlist->DrawIndexedInstanced(current_render_item.mesh_geometry.index_count, 1, 0, 0, 0);
+	}
+}
+
+void mvp_showcase_app::draw_selection_outline()
+{
+	m_graphics_cmdlist->SetPipelineState(m_outline_pso.get());
+
+	// scale up the selected render_item(s)
+	if (selected_ri != nullptr)
+	{
+		outline_ri = {};
+		outline_ri = *selected_ri;
+
+		m_graphics_cmdlist->SetGraphicsRootConstantBufferView(3, outline_ri.srt_cbv_uploader->GetGPUVirtualAddress());
+		//m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, outline_ri.cbv_gpu_handle);
+		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &outline_ri.mesh_geometry.vbv);
+		m_graphics_cmdlist->IASetIndexBuffer(&outline_ri.mesh_geometry.ibv);
+		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_graphics_cmdlist->DrawIndexedInstanced(outline_ri.mesh_geometry.index_count, 1, 0, 0, 0);
 	}
 }
 
@@ -427,15 +535,17 @@ void mvp_showcase_app::update_mvp_matrix()
 		break;
 	}
 
-	//m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
-	m_view = XMMatrixSet(
-		0.948683321f, -0.0589483120f, -0.310684890f, 0.0f,
-		-3.72529030e-09, 0.982471883f, -0.186410919f, 0.0f,
-		0.316227794f, 0.176844940f, 0.932054639f, 0.0f,
-		-0.0f, -0.982471704f, 16.2798882f, 1.0f);
+	m_view = XMMatrixLookAtLH(eye_position, focus_point, up_direction);
+	//m_view = XMMatrixSet(
+	//	0.948683321f, -0.0589483120f, -0.310684890f, 0.0f,
+	//	-3.72529030e-09, 0.982471883f, -0.186410919f, 0.0f,
+	//	0.316227794f, 0.176844940f, 0.932054639f, 0.0f,
+	//	-0.0f, -0.982471704f, 16.2798882f, 1.0f);
 
 	// projection matrix
 	float aspect_ratio = m_current_vm.viewport_width() / m_current_vm.viewport_height();
+
+	//We could have used XMMatrixOrthographicLH instead if we wanted an orthographic projection
 	m_projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_current_vm.field_of_view()), aspect_ratio, m_current_vm.near_z(), m_current_vm.far_z());
 
 	// upload
@@ -464,22 +574,32 @@ void mvp_showcase_app::update_model_matrices()
 
 		XMVECTOR rotation_axis = XMVectorSet(current_mesh.rotation_axis().x(), current_mesh.rotation_axis().y(), current_mesh.rotation_axis().z(), 0);
 		XMMATRIX rotation_matrix = XMMatrixRotationAxis(rotation_axis, XMConvertToRadians(current_mesh.angle()));
-		//XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
-		XMMATRIX translation_matrix = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
+		XMMATRIX translation_matrix = XMMatrixTranslation(current_mesh.translation().x(), current_mesh.translation().y(), current_mesh.translation().z());
 		XMMATRIX scaling_matrix = XMMatrixScaling(current_mesh.scale().x(), current_mesh.scale().y(), current_mesh.scale().z());
 
 		m_current_index = current_mesh.index();
 
-		m_model = rotation_matrix * translation_matrix * scaling_matrix;
+		m_model = scaling_matrix * rotation_matrix * translation_matrix;
 		XMFLOAT4X4* model_world_matrix = &render_items[m_current_index].mesh_geometry.world_matrix;
 		XMStoreFloat4x4(model_world_matrix, XMMatrixTranspose(m_model));
 
-		if (render_items.size() > m_current_index)
-		{
-			memcpy(reinterpret_cast<void*>(render_items[m_current_index].constant_buffer_allocation.CPU),
-				reinterpret_cast<void*>(model_world_matrix),
-				sizeof(model_cb));
-		}
+		memcpy(reinterpret_cast<void*>(render_items[m_current_index].model_allocation.CPU),
+			reinterpret_cast<void*>(model_world_matrix),
+			sizeof(model_cb));
+
+		// update srt
+
+		XMStoreFloat4x4(&m_stored_srt.scaling, XMMatrixTranspose(XMMatrixScaling(
+			current_mesh.scale().x() + 0.02f,
+			current_mesh.scale().y() + 0.02f,
+			current_mesh.scale().z() + 0.02f)));
+		XMStoreFloat4x4(&m_stored_srt.rotation, XMMatrixTranspose(rotation_matrix));
+		XMStoreFloat4x4(&m_stored_srt.translation, XMMatrixTranspose(translation_matrix));
+
+		memcpy(
+			reinterpret_cast<void*>(render_items[m_current_index].srt_allocation.CPU),
+			reinterpret_cast<void*>(&m_stored_srt),
+			sizeof(srt_cb));
 	}
 }
 
@@ -487,8 +607,9 @@ void mvp_showcase_app::create_root_signature()
 {
 	D3D12_DESCRIPTOR_RANGE cb_manips_ranges[1];
 	D3D12_DESCRIPTOR_RANGE sampler_ranges[1];
-	D3D12_ROOT_PARAMETER params[3];
+	D3D12_ROOT_PARAMETER params[4];
 
+	// ModelCB
 	D3D12_DESCRIPTOR_RANGE descriptor_range_cb;
 	descriptor_range_cb.BaseShaderRegister = 1;
 	descriptor_range_cb.NumDescriptors = 1;
@@ -526,6 +647,7 @@ void mvp_showcase_app::create_root_signature()
 	root_param_sampler.DescriptorTable = sampler_table;
 	params[1] = root_param_sampler;
 
+	// ViewProjectionCB (inline)
 	D3D12_ROOT_DESCRIPTOR view_proj_cb_root_descriptor;
 	view_proj_cb_root_descriptor.RegisterSpace = 0;
 	view_proj_cb_root_descriptor.ShaderRegister = 0;
@@ -536,6 +658,18 @@ void mvp_showcase_app::create_root_signature()
 	cb_view_proj_param.Descriptor = view_proj_cb_root_descriptor;
 	params[2] = cb_view_proj_param;
 
+	//srtCB (inline)
+	D3D12_ROOT_DESCRIPTOR srt_cb_root_descriptor;
+	srt_cb_root_descriptor.RegisterSpace = 0;
+	srt_cb_root_descriptor.ShaderRegister = 2;
+
+	D3D12_ROOT_PARAMETER cb_srt_param;
+	cb_srt_param.ParameterType = D3D12_ROOT_PARAMETER_TYPE::D3D12_ROOT_PARAMETER_TYPE_CBV;
+	cb_srt_param.ShaderVisibility = D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_VERTEX;
+	cb_srt_param.Descriptor = srt_cb_root_descriptor;
+	params[3] = cb_srt_param;
+
+	//Root signature
 	D3D12_ROOT_SIGNATURE_DESC rootsig_desc;
 	rootsig_desc.Flags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootsig_desc.NumParameters = _countof(params);
@@ -593,27 +727,27 @@ void mvp_showcase_app::create_view_proj_cbv()
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		guid_of<ID3D12Resource>(),
-		m_cbv_uploaded_resource.put_void()));
+		m_viewproj_uploaded_resource.put_void()));
 
-	m_cbv_uploaded_resource->SetName(L"cbv_uploaded_resource");
+	m_viewproj_uploaded_resource->SetName(L"cbv_uploaded_resource");
 
 	D3D12_RANGE range;
 	range.Begin = 0;
 	range.End = sizeof(view_proj_cb);
-	m_cbv_uploaded_resource->Map(0, &range, reinterpret_cast<void**>(&m_mvp_data));
+	m_viewproj_uploaded_resource->Map(0, &range, reinterpret_cast<void**>(&m_mvp_data));
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
-	cbv_desc.BufferLocation = m_cbv_uploaded_resource->GetGPUVirtualAddress();
-	//Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
-	cbv_desc.SizeInBytes = (sizeof(view_proj_cb) + 255) & ~255;
+	// No need for a CreateConstantBufferView because inline root descriptors can be described using a mapped cpu pointer 
 
-	m_device_resources.device->CreateConstantBufferView(&cbv_desc, m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart());
+	//D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc = {};
+	//cbv_desc.BufferLocation = m_viewproj_uploaded_resource->GetGPUVirtualAddress();
+	////Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
+	//cbv_desc.SizeInBytes = (sizeof(view_proj_cb) + 255) & ~255;
+
+	//m_device_resources.device->CreateConstantBufferView(&cbv_desc, m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart());
 }
 
 void mvp_showcase_app::create_model_cbv(render_item& render_item)
 {
-	//render_item& render_item = render_items.back();
-
 	//create upload buffer
 	D3D12_HEAP_PROPERTIES upload_heap_props;
 	upload_heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY::D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -649,27 +783,66 @@ void mvp_showcase_app::create_model_cbv(render_item& render_item)
 	D3D12_RANGE range;
 	range.Begin = 0;
 	range.End = sizeof(model_cb);
-	render_item.model_cbv_uploader->Map(0, &range, &render_item.constant_buffer_allocation.CPU);
-	render_item.constant_buffer_allocation.GPU = render_item.model_cbv_uploader->GetGPUVirtualAddress();
+	render_item.model_cbv_uploader->Map(0, &range, reinterpret_cast<void**>(&render_item.model_allocation.CPU));
+	render_item.model_allocation.GPU = render_item.model_cbv_uploader->GetGPUVirtualAddress();
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbv_desc;
-	cbv_desc.BufferLocation = render_item.constant_buffer_allocation.GPU;
+	cbv_desc.BufferLocation = render_item.model_allocation.GPU;
 	//Size of 64 is invalid. Device requires SizeInBytes be a multiple of 256
 	cbv_desc.SizeInBytes = (sizeof(model_cb) + 255) & ~255;
 
-	// We don't have to do -1 on the size of render_items because
-	// the view-projection matrix data already takes the first index in the cbv descriptor table, so we start at index 1 
 	UINT heap_index = render_items.size();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle = m_srv_cbv_uav_heap->GetCPUDescriptorHandleForHeapStart();
 	cpu_handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
-	//render_item.cbv_cpu_handle = cpu_handle;
 
 	D3D12_GPU_DESCRIPTOR_HANDLE gpu_handle = m_srv_cbv_uav_heap->GetGPUDescriptorHandleForHeapStart();
 	gpu_handle.ptr += m_device_resources.m_cbv_srv_uav_increment_size * heap_index;
 	render_item.cbv_gpu_handle = gpu_handle;
 
 	m_device_resources.device->CreateConstantBufferView(&cbv_desc, cpu_handle);
+}
+
+void mvp_showcase_app::create_srt_cbv(render_item & render_item)
+{
+	D3D12_HEAP_PROPERTIES upload_heap_props;
+	upload_heap_props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY::D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	upload_heap_props.CreationNodeMask = 0;
+	upload_heap_props.MemoryPoolPreference = D3D12_MEMORY_POOL::D3D12_MEMORY_POOL_UNKNOWN;
+	upload_heap_props.Type = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD;
+	upload_heap_props.VisibleNodeMask = 0;
+
+	D3D12_RESOURCE_DESC cbv_resource_desc;
+	cbv_resource_desc.Alignment = 0;
+	cbv_resource_desc.DepthOrArraySize = 1;
+	cbv_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbv_resource_desc.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_NONE;
+	cbv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_UNKNOWN;
+	cbv_resource_desc.Height = 1;
+	// align to 256 bytes (minimum hardware allocation size)
+	cbv_resource_desc.Width = (sizeof(srt_cb) + 255) & ~255;
+	//Layout must be D3D12_TEXTURE_LAYOUT_ROW_MAJOR when D3D12_RESOURCE_DESC::Dimension is D3D12_RESOURCE_DIMENSION_BUFFER
+	cbv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	cbv_resource_desc.MipLevels = 1;
+	cbv_resource_desc.SampleDesc.Count = 1;
+	cbv_resource_desc.SampleDesc.Quality = 0;
+
+	check_hresult(m_device_resources.device->CreateCommittedResource(
+		&upload_heap_props,
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&cbv_resource_desc,
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		guid_of<ID3D12Resource>(),
+		render_item.srt_cbv_uploader.put_void()));
+
+	render_item.srt_cbv_uploader->SetName(L"srt_uploaded_resource");
+
+	D3D12_RANGE range;
+	range.Begin = 0;
+	range.End = sizeof(srt_cb);
+	render_item.srt_cbv_uploader->Map(0, &range, reinterpret_cast<void**>(&render_item.srt_allocation.CPU));
+	// No need for a CreateConstantBufferView because inline root descriptors can be described using only a mapped cpu pointer 
 }
 
 void mvp_showcase_app::create_srv_cbv_uav_heap(uint32_t descriptor_count)
@@ -742,6 +915,10 @@ render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd
 
 	render_item cube_render_item;
 	cube_render_item.mesh_geometry = m_cube_mesh;
+
+	XMVECTOR max = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
+	XMVECTOR min = XMVectorSet(-1.0f, -1.0f, -1.0f, 0.0f);
+	cube_render_item.bounding_box.CreateFromPoints(cube_render_item.bounding_box, min, max);
 	return cube_render_item;
 }
 
@@ -752,6 +929,7 @@ void mvp_showcase_app::create_cube()
 
 	render_item render_item = create_simple_cube(m_ui_requests_cmdlist.get());
 	create_model_cbv(render_item);
+	create_srt_cbv(render_item);
 	render_items.push_back(std::move(render_item));
 
 	m_cmd_queue->execute_cmd_list(m_ui_requests_cmdlist);

@@ -7,7 +7,7 @@ public:
 	mesh();
 	~mesh();
 
-	std::string name = "";
+	//std::string name = "";
 	DirectX::XMFLOAT4X4 world_matrix;
 
 	// vertex data

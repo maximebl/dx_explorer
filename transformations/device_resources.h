@@ -67,6 +67,7 @@ public:
 	void create_default_rootsig();
 	winrt::com_ptr<ID3D12RootSignature> default_root_signature;
 private:
+	DXGI_FORMAT m_dsv_res_format = DXGI_FORMAT::DXGI_FORMAT_D24_UNORM_S8_UINT;
 	winrt::com_ptr<ID3D12Resource> m_dsv;
 	winrt::com_ptr<ID3D12Resource> m_cbv_uploaded_resource;
 	winrt::com_ptr<IDXGISwapChain1> m_swapchain;

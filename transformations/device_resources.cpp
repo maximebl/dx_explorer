@@ -60,7 +60,7 @@ void device_resources::create_dsv(UINT64 width, UINT height)
 	dsv_resource_desc.DepthOrArraySize = 1;
 	dsv_resource_desc.Dimension = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	dsv_resource_desc.Flags = D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-	dsv_resource_desc.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+	dsv_resource_desc.Format = m_dsv_res_format;
 	dsv_resource_desc.Height = height;
 	dsv_resource_desc.Width = width;
 	dsv_resource_desc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -78,7 +78,7 @@ void device_resources::create_dsv(UINT64 width, UINT height)
 	D3D12_CLEAR_VALUE optimized_clear_value = {};
 	optimized_clear_value.DepthStencil.Depth = 1.0f;
 	optimized_clear_value.DepthStencil.Stencil = 0;
-	optimized_clear_value.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+	optimized_clear_value.Format = m_dsv_res_format;
 
 	check_hresult(device->CreateCommittedResource(
 		&heap_props,
@@ -91,7 +91,7 @@ void device_resources::create_dsv(UINT64 width, UINT height)
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc = {};
 	dsv_desc.Flags = D3D12_DSV_FLAGS::D3D12_DSV_FLAG_NONE;
-	dsv_desc.Format = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+	dsv_desc.Format = m_dsv_res_format;
 	dsv_desc.Texture2D.MipSlice = 0;
 	dsv_desc.ViewDimension = D3D12_DSV_DIMENSION::D3D12_DSV_DIMENSION_TEXTURE2D;
 
@@ -145,6 +145,8 @@ void device_resources::compile_default_shaders()
 	default_shaders[L"vs"] = compile_shader_from_file(shaders_folder + file_name, "VS", "vs_5_1");
 	default_shaders[L"ps"] = compile_shader_from_file(shaders_folder + file_name, "PS", "ps_5_1");
 	default_shaders[L"vs_noproj"] = compile_shader_from_file(shaders_folder + file_name, "VS_NoProj", "vs_5_1");
+	default_shaders[L"vs_outline"] = compile_shader_from_file(shaders_folder + file_name, "VS_Outline", "vs_5_1");
+	default_shaders[L"ps_outline"] = compile_shader_from_file(shaders_folder + file_name, "PS_Outline", "ps_5_1");
 }
 
 void device_resources::create_default_rootsig()
@@ -309,7 +311,7 @@ void device_resources::create_line_pso()
 	rast_state.CullMode = D3D12_CULL_MODE::D3D12_CULL_MODE_NONE;
 	pso_desc.RasterizerState = rast_state;
 	pso_desc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	pso_desc.DSVFormat = DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT;
+	pso_desc.DSVFormat = m_dsv_res_format;
 	pso_desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE::D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pso_desc.NumRenderTargets = 1;
 	pso_desc.RTVFormats[0] = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
