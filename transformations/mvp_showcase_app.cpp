@@ -240,20 +240,17 @@ void mvp_showcase_app::render()
 	m_graphics_cmdlist->SetDescriptorHeaps(static_cast<UINT>(descriptor_heaps.size()), descriptor_heaps.data());
 
 	m_graphics_cmdlist->OMSetStencilRef(1);
-	m_graphics_cmdlist->SetPipelineState(m_pso.get());
 	m_graphics_cmdlist->SetGraphicsRootConstantBufferView(2, m_viewproj_uploaded_resource->GetGPUVirtualAddress());
 
-	// draw the cubes
 	draw_render_items();
-	draw_selection_outline();
 
 	vertex_pos_color v1;
 	vertex_pos_color v2;
-	//XMStoreFloat3(&v1.Position, m_ray_origin);
-	//XMStoreFloat3(&v1.Color, DirectX::Colors::Red);
+	XMStoreFloat3(&v1.Position, m_ray_origin);
+	XMStoreFloat3(&v1.Color, DirectX::Colors::Red);
 
-	//XMStoreFloat3(&v2.Position, m_ray_direction);
-	//XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
+	XMStoreFloat3(&v2.Position, m_ray_direction);
+	XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
 
 	XMStoreFloat3(&v1.Position, m_ray_origin);
 	XMStoreFloat3(&v1.Color, DirectX::Colors::Blue);
@@ -262,7 +259,7 @@ void mvp_showcase_app::render()
 	XMStoreFloat3(&v2.Color, DirectX::Colors::Red);
 
 	//pick(m_current_vm.clicked_viewport_position().x(), m_current_vm.clicked_viewport_position().y());
-	//draw_line(m_graphics_cmdlist.get(), v1, v2);
+	draw_line(m_graphics_cmdlist.get(), v1, v2);
 
 	m_device_resources.transition_resource(m_graphics_cmdlist.get(), m_device_resources.get_render_target(m_current_backbuffer_index),
 		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET,
@@ -350,8 +347,8 @@ void mvp_showcase_app::create_pso()
 
 	pso_depth_stencil_desc.DepthEnable = true;
 	pso_depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
-	pso_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
-	pso_depth_stencil_desc.StencilEnable = true;
+	pso_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ALL;
+	pso_depth_stencil_desc.StencilEnable = false;
 	pso_depth_stencil_desc.StencilReadMask = 0xff;
 	pso_depth_stencil_desc.StencilWriteMask = 0xff;
 
@@ -370,12 +367,50 @@ void mvp_showcase_app::create_pso()
 
 	pso_desc.DepthStencilState = pso_depth_stencil_desc;
 
-	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&pso_desc, guid_of<ID3D12PipelineState>(), m_pso.put_void()));
+	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&pso_desc, guid_of<ID3D12PipelineState>(), m_opaque_pso.put_void()));
+
+	// selection PSO
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC selection_pso_desc = pso_desc;
+	D3D12_DEPTH_STENCIL_DESC selection_depth_stencil_desc;
+	selection_depth_stencil_desc.DepthEnable = true;
+	selection_depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
+	selection_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
+	selection_depth_stencil_desc.StencilEnable = true;
+	selection_depth_stencil_desc.StencilReadMask = 0xff;
+	selection_depth_stencil_desc.StencilWriteMask = 0xff;
+
+	D3D12_DEPTH_STENCILOP_DESC selection_depth_stencilop_desc;
+	selection_depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	selection_depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	selection_depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_REPLACE;
+	selection_depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_NOT_EQUAL;
+	selection_depth_stencil_desc.BackFace = selection_depth_stencilop_desc;
+
+	selection_depth_stencilop_desc.StencilDepthFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	selection_depth_stencilop_desc.StencilFailOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_KEEP;
+	selection_depth_stencilop_desc.StencilPassOp = D3D12_STENCIL_OP::D3D12_STENCIL_OP_REPLACE;
+	selection_depth_stencilop_desc.StencilFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_NOT_EQUAL;
+	selection_depth_stencil_desc.FrontFace = selection_depth_stencilop_desc;
+
+	selection_pso_desc.DepthStencilState = selection_depth_stencil_desc;
+
+	D3D12_SHADER_BYTECODE selection_vs_bytecode;
+	selection_vs_bytecode.BytecodeLength = m_shaders[L"vs"]->GetBufferSize();
+	selection_vs_bytecode.pShaderBytecode = m_shaders[L"vs"]->GetBufferPointer();
+
+	D3D12_SHADER_BYTECODE selection_ps_bytecode;
+	selection_ps_bytecode.BytecodeLength = m_shaders[L"ps"]->GetBufferSize();
+	selection_ps_bytecode.pShaderBytecode = m_shaders[L"ps"]->GetBufferPointer();
+
+	selection_pso_desc.VS = selection_vs_bytecode;
+	selection_pso_desc.PS = selection_ps_bytecode;
+
+	check_hresult(m_device_resources.device->CreateGraphicsPipelineState(&selection_pso_desc, guid_of<ID3D12PipelineState>(), m_selection_pso.put_void()));
 
 	// outline PSO
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC outline_pso_desc = pso_desc;
 	D3D12_DEPTH_STENCIL_DESC outline_depth_stencil_desc;
-	outline_depth_stencil_desc.DepthEnable = true;
+	outline_depth_stencil_desc.DepthEnable = false;
 	outline_depth_stencil_desc.DepthFunc = D3D12_COMPARISON_FUNC::D3D12_COMPARISON_FUNC_LESS;
 	outline_depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK::D3D12_DEPTH_WRITE_MASK_ZERO;
 	outline_depth_stencil_desc.StencilEnable = true;
@@ -419,31 +454,41 @@ void mvp_showcase_app::draw_render_items()
 		//debug_tools::assert_resource_state(render_items[i].mesh_geometry.vertex_default.get(), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 		render_item& current_render_item = render_items[i];
 
-		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &current_render_item.mesh_geometry.vbv);
-		m_graphics_cmdlist->IASetIndexBuffer(&current_render_item.mesh_geometry.ibv);
+		if (&current_render_item != selected_ri)
+		{
+			// dont write to stencil
+			m_graphics_cmdlist->SetPipelineState(m_opaque_pso.get());
+			m_graphics_cmdlist->IASetVertexBuffers(0, 1, &current_render_item.mesh_geometry.vbv);
+			m_graphics_cmdlist->IASetIndexBuffer(&current_render_item.mesh_geometry.ibv);
+			m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, current_render_item.cbv_gpu_handle);
+			m_graphics_cmdlist->DrawIndexedInstanced(current_render_item.mesh_geometry.index_count, 1, 0, 0, 0);
+		}
+	}
+
+	if (selected_ri != nullptr)
+	{
+		// write to stencil
+		m_graphics_cmdlist->SetPipelineState(m_selection_pso.get());
+		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &selected_ri->mesh_geometry.vbv);
+		m_graphics_cmdlist->IASetIndexBuffer(&selected_ri->mesh_geometry.ibv);
 		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, current_render_item.cbv_gpu_handle);
-		m_graphics_cmdlist->DrawIndexedInstanced(current_render_item.mesh_geometry.index_count, 1, 0, 0, 0);
+		m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, selected_ri->cbv_gpu_handle);
+		m_graphics_cmdlist->DrawIndexedInstanced(selected_ri->mesh_geometry.index_count, 1, 0, 0, 0);
+
+		draw_selection_outline();
 	}
 }
 
 void mvp_showcase_app::draw_selection_outline()
 {
 	m_graphics_cmdlist->SetPipelineState(m_outline_pso.get());
-
-	// scale up the selected render_item(s)
-	if (selected_ri != nullptr)
-	{
-		outline_ri = {};
-		outline_ri = *selected_ri;
-
-		m_graphics_cmdlist->SetGraphicsRootConstantBufferView(3, outline_ri.srt_cbv_uploader->GetGPUVirtualAddress());
-		//m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, outline_ri.cbv_gpu_handle);
-		m_graphics_cmdlist->IASetVertexBuffers(0, 1, &outline_ri.mesh_geometry.vbv);
-		m_graphics_cmdlist->IASetIndexBuffer(&outline_ri.mesh_geometry.ibv);
-		m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		m_graphics_cmdlist->DrawIndexedInstanced(outline_ri.mesh_geometry.index_count, 1, 0, 0, 0);
-	}
+	m_graphics_cmdlist->SetGraphicsRootConstantBufferView(3, selected_ri->srt_cbv_uploader->GetGPUVirtualAddress());
+	//m_graphics_cmdlist->SetGraphicsRootDescriptorTable(0, outline_ri.cbv_gpu_handle);
+	m_graphics_cmdlist->IASetVertexBuffers(0, 1, &selected_ri->mesh_geometry.vbv);
+	m_graphics_cmdlist->IASetIndexBuffer(&selected_ri->mesh_geometry.ibv);
+	m_graphics_cmdlist->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_graphics_cmdlist->DrawIndexedInstanced(selected_ri->mesh_geometry.index_count, 1, 0, 0, 0);
 }
 
 void mvp_showcase_app::draw_line(ID3D12GraphicsCommandList4* cmd_list, vertex_pos_color v1, vertex_pos_color v2)
@@ -924,6 +969,8 @@ render_item mvp_showcase_app::create_simple_cube(ID3D12GraphicsCommandList4* cmd
 
 void mvp_showcase_app::create_cube()
 {
+	selected_ri = nullptr;
+
 	check_hresult(ui_requests_cmd_allocator->Reset());
 	check_hresult(m_ui_requests_cmdlist->Reset(ui_requests_cmd_allocator.get(), nullptr));
 

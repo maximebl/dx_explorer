@@ -107,7 +107,8 @@ private:
 	winrt::com_ptr<ID3D12RootSignature> m_root_signature = nullptr;
 	winrt::com_ptr<ID3D12DescriptorHeap> m_srv_cbv_uav_heap = nullptr;
 	winrt::com_ptr<ID3D12Resource> m_viewproj_uploaded_resource = nullptr;
-	winrt::com_ptr<ID3D12PipelineState> m_pso = nullptr;
+	winrt::com_ptr<ID3D12PipelineState> m_selection_pso = nullptr;
+	winrt::com_ptr<ID3D12PipelineState> m_opaque_pso = nullptr;
 	winrt::com_ptr<ID3D12PipelineState> m_outline_pso = nullptr;
 	HANDLE m_render_thread_handle;
 	HANDLE m_cmd_recording_thread_handle;
@@ -118,7 +119,6 @@ private:
 	render_item* selected_ri = nullptr;
 	render_item outline_ri;
 	std::byte* m_mvp_data;
-	//std::byte* m_srt_data;
 
 	view_proj_cb m_stored_mvp;
 	srt_cb m_stored_srt;
@@ -132,5 +132,6 @@ private:
 	DirectX::XMVECTOR m_point;
 	bool line_data_uploaded = false;
 	D3D12_VERTEX_BUFFER_VIEW line_vbv;
+
 };
 

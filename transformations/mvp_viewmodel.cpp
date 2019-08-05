@@ -289,8 +289,8 @@ namespace winrt::transformations::implementation
 		co_await winrt::resume_background();
 		m_app->create_cube();
 
-		//co_await m_ui_thread;
-		//selected_mesh(new_mesh);
+		co_await m_ui_thread;
+		selected_mesh(new_mesh);
 		co_return;
 	}
 
